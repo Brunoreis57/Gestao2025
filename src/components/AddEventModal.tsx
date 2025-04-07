@@ -3,7 +3,7 @@
 import React from 'react';
 import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { FaTimes } from 'react-icons/fa';
 import { useEventStore } from '@/store/eventStore';
 
 export interface EventData {
@@ -133,18 +133,17 @@ const AddEventModal = ({ isOpen, onClose, onSave, initialData }: AddEventModalPr
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title
-                  as="h3"
-                  className="text-lg font-medium leading-6 text-gray-900 dark:text-white flex justify-between items-center"
-                >
-                  {initialData ? 'Editar Evento' : 'Adicionar Evento'}
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                    Adicionar Novo Evento
+                  </h2>
                   <button
-                    onClick={onClose}
                     className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                    onClick={onClose}
                   >
-                    <XMarkIcon className="w-6 h-6" />
+                    <FaTimes className="w-6 h-6" />
                   </button>
-                </Dialog.Title>
+                </div>
 
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
                   <div>

@@ -213,14 +213,14 @@ export default function AgendaPage() {
               </button>
 
               {expandedMonths.includes(monthKey) && (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {Object.entries(monthData.markerGroups).map(([markerName, markerEvents]) => (
-                    <div key={markerName} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    <div key={markerName} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3">
+                      <h3 className="text-md font-medium text-gray-900 dark:text-white mb-3">
                         {markerName}
                       </h3>
                       <div className={viewMode === 'card' 
-                        ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                        ? "grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                         : "divide-y dark:divide-gray-700 border-y dark:border-gray-700"
                       }>
                         {markerEvents

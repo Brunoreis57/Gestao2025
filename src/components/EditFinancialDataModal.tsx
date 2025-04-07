@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { FaTimes } from 'react-icons/fa';
 
 interface EditFinancialDataModalProps {
   isOpen: boolean;
@@ -62,16 +62,15 @@ export default function EditFinancialDataModal({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 shadow-xl transition-all">
-                <div className="flex items-center justify-between mb-4">
-                  <Dialog.Title as="h3" className="text-lg font-medium text-gray-900 dark:text-white">
-                    Editar Dados Bancários
-                  </Dialog.Title>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                    Editar Dados Financeiros
+                  </h2>
                   <button
-                    type="button"
-                    className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                     onClick={onClose}
                   >
-                    <XMarkIcon className="h-6 w-6" />
+                    <FaTimes className="w-6 h-6" />
                   </button>
                 </div>
 

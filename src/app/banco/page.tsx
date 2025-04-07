@@ -5,7 +5,8 @@ import Card from '@/components/Card';
 import AddExpenseModal from '@/components/AddExpenseModal';
 import EditFinancialDataModal from '@/components/EditFinancialDataModal';
 import { useStore } from '@/store/useStore';
-import { PencilIcon } from '@heroicons/react/24/outline';
+import { FaPencilAlt } from 'react-icons/fa';
+import Link from 'next/link';
 
 export default function BankPage() {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
@@ -52,7 +53,25 @@ export default function BankPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-12">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Banco</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Banco</h1>
+        
+        {/* Links para subpáginas */}
+        <div className="flex flex-wrap gap-4">
+          <Link 
+            href="/banco/contas" 
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-primary dark:text-primary-400 border border-primary/20 dark:border-primary/30 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
+          >
+            Contas Pessoais
+          </Link>
+          <Link 
+            href="/banco/simulacao" 
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-primary dark:text-primary-400 border border-primary/20 dark:border-primary/30 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
+          >
+            Simulação Uber
+          </Link>
+        </div>
+      </div>
 
       {/* Seção de Cards */}
       <section>
@@ -64,7 +83,7 @@ export default function BankPage() {
             onClick={() => setIsFinancialModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <PencilIcon className="w-4 h-4" />
+            <FaPencilAlt className="w-4 h-4" />
             Editar Dados
           </button>
         </div>
