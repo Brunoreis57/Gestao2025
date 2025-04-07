@@ -1,17 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useTheme } from 'next-themes';
-import { FaHome, FaMoneyBill, FaCalendarAlt, FaSun, FaMoon } from 'react-icons/fa';
+import { FaHome, FaMoneyBill, FaCalendarAlt, FaSun, FaMoon, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  const { user, logout } = useAuthStore();
 
   useEffect(() => {
     setIsMounted(true);
@@ -23,9 +25,19 @@ export default function Sidebar() {
     { name: 'Agenda', href: '/agenda', icon: FaCalendarAlt },
   ];
 
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
   return (
     <div className="fixed top-0 left-0 h-full w-16 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-4 z-10">
-      <div className="flex-1 flex flex-col items-center gap-3 mt-6">
+      {/* Logo ou iniciais do app */}
+      <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg mb-8">
+        G25
+      </div>
+
+      <div className="flex-1 flex flex-col items-center gap-3">
         {links.map((link) => {
           const Icon = link.icon;
           return (
@@ -48,16 +60,45 @@ export default function Sidebar() {
         })}
       </div>
 
-      <button
-        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        className="p-3 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-      >
-        {isMounted && theme === 'dark' ? (
-          <FaSun className="w-6 h-6" />
-        ) : (
-          <FaMoon className="w-6 h-6" />
+      {/* Área do usuário e configurações */}
+      <div className="flex flex-col items-center gap-3 mt-auto">
+        {user && (
+          <div className="relative group">
+            <div className="p-3 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+              <FaUser className="w-6 h-6" />
+            </div>
+            <div className="absolute left-full ml-2 bg-gray-800 dark:bg-gray-700 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity min-w-max">
+              {user.name}
+            </div>
+          </div>
         )}
-      </button>
+
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="p-3 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 transition-colors relative group"
+        >
+          {isMounted && theme === 'dark' ? (
+            <FaSun className="w-6 h-6" />
+          ) : (
+            <FaMoon className="w-6 h-6" />
+          )}
+          <span className="absolute left-full ml-2 bg-gray-800 dark:bg-gray-700 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+            {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+          </span>
+        </button>
+
+        {user && (
+          <button
+            onClick={handleLogout}
+            className="p-3 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-500 dark:hover:text-red-400 transition-colors relative group"
+          >
+            <FaSignOutAlt className="w-6 h-6" />
+            <span className="absolute left-full ml-2 bg-gray-800 dark:bg-gray-700 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+              Sair
+            </span>
+          </button>
+        )}
+      </div>
     </div>
   );
 } 
