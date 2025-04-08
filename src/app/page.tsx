@@ -182,15 +182,15 @@ export default function Home() {
   const weekdayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
   return (
-    <div className="container mx-auto py-8 px-4 space-y-12">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+    <div className="w-full py-4 space-y-6">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
 
       {/* Seção de Cards */}
       <section>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-4">
           Resumo de Eventos
         </h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-7 3xl:grid-cols-9 4xl:grid-cols-11 gap-4 md:gap-6">
           <Card
             title="Eventos em Aberto na Semana"
             value={getCurrentWeekEvents().filter(e => !e.completed).length}
@@ -210,9 +210,9 @@ export default function Home() {
       </section>
 
       {/* Agenda Semanal */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <section className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
             Agenda Semanal
           </h2>
           <div className="flex items-center gap-4">
@@ -238,7 +238,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 xl:grid-cols-7 2xl:grid-cols-7 gap-4">
           {weekDays.map((date) => {
             const dayEvents = getEventsForDay(date);
             const isToday = date.toDateString() === new Date().toDateString();
@@ -281,11 +281,11 @@ export default function Home() {
                       return (
                         <div
                           key={event.id}
-                          className={`p-2 rounded-lg text-sm ${bgColorClass} text-gray-700 dark:text-gray-200`}
+                          className={`p-2 rounded-lg text-sm ${bgColorClass} text-gray-700 dark:text-gray-200 hover:shadow-sm transition-shadow`}
                         >
                           <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">{event.title}</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{event.title}</p>
                               {event.time && (
                                 <p className="text-xs opacity-75">{event.time}</p>
                               )}
@@ -293,7 +293,7 @@ export default function Home() {
                             {!event.completed && (
                               <button
                                 onClick={() => toggleEventCompletion(event.id)}
-                                className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-black/20 transition-colors"
+                                className="p-1 rounded-full hover:bg-white/50 dark:hover:bg-black/20 transition-colors flex-shrink-0 ml-2"
                                 title="Marcar como concluído"
                               >
                                 <FaCheckCircle className="w-5 h-5" />
@@ -321,9 +321,9 @@ export default function Home() {
       </section>
 
       {/* Agenda Mensal */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <section className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
             Agenda Mensal
           </h2>
           <div className="flex items-center gap-4">

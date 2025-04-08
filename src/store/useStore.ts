@@ -31,7 +31,8 @@ interface FinancialData {
 interface Category {
   id: string;
   name: string;
-  color: string;
+  description?: string;
+  color?: string;
 }
 
 interface PersonalDebt {

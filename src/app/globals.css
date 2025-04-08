@@ -4,10 +4,221 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-rgb: 245, 245, 245;
+  --background-start-rgb: 248, 250, 252;
+  --background-end-rgb: 255, 255, 255;
+  --primary-rgb: 99, 102, 241;
+  --primary-light-rgb: 129, 140, 248;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 10, 10, 20;
+    --background-end-rgb: 20, 20, 30;
+    --primary-rgb: 129, 140, 248;
+    --primary-light-rgb: 165, 180, 252;
+  }
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  background: linear-gradient(
+      to bottom,
+      rgb(var(--background-start-rgb)),
+      rgb(var(--background-end-rgb))
+    )
+    fixed;
+  min-height: 100vh;
+}
+
+/* Melhoria na tipografia para leitura em dispositivos móveis */
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Estilo de scrollbar personalizado */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Animações para melhor feedback visual */
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in;
+}
+
+/* Melhorias para dispositivos móveis */
+@media (max-width: 640px) {
+  /* Ajustes de espaçamento */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Ajustes em elementos de tabela para mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  /* Melhorar touch areas em dispositivos móveis */
+  button, 
+  [role="button"],
+  a.button,
+  input[type="submit"] {
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+  }
+  
+  /* Espaçamento vertical melhor em seções */
+  section + section {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Melhorias para impressão */
+@media print {
+  body {
+    background: none;
+    color: #000;
+  }
+  
+  .no-print, 
+  button, 
+  [role="button"],
+  nav,
+  footer {
+    display: none !important;
+  }
+  
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    color: #000;
+    page-break-after: avoid;
+  }
+  
+  table {
+    page-break-inside: avoid;
+  }
+}
+
+/* Transições e efeitos para elementos interativos */
+a, button, input, select, textarea,
+[tabindex]:not([tabindex="-1"]) {
+  transition: all 0.2s ease;
+}
+
+/* Melhorar espaço de clique em links e botões */
+a:not(.inline),
+button:not(.inline) {
+  padding: 0.125rem;
+}
+
+/* Cor primária e variações */
+.text-primary {
+  color: rgb(var(--primary-rgb));
+}
+
+.dark .text-primary-light {
+  color: rgb(var(--primary-light-rgb));
+}
+
+.bg-primary {
+  background-color: rgb(var(--primary-rgb));
+}
+
+.bg-primary\/10 {
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.bg-primary\/20 {
+  background-color: rgba(var(--primary-rgb), 0.2);
+}
+
+.bg-primary\/5 {
+  background-color: rgba(var(--primary-rgb), 0.05);
+}
+
+.border-primary\/20 {
+  border-color: rgba(var(--primary-rgb), 0.2);
+}
+
+.border-primary\/10 {
+  border-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.border-primary\/30 {
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+.hover\:bg-primary\/90:hover {
+  background-color: rgba(var(--primary-rgb), 0.9);
+}
+
+.hover\:bg-primary\/5:hover {
+  background-color: rgba(var(--primary-rgb), 0.05);
+}
+
+.hover\:bg-primary\/10:hover {
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+/* Acessibilidade - foco visível para navegação por teclado */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid rgb(var(--primary-rgb));
+  outline-offset: 2px;
+}
+
+/* Contraste melhorado para leitura */
+.dark .text-white {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.dark .text-gray-200 {
+  color: rgba(229, 231, 235, 0.9);
 } 
