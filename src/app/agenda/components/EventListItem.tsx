@@ -36,7 +36,12 @@ const EventListItem = ({ event, onComplete, onEdit, onDelete }: EventListItemPro
   };
 
   return (
-    <div className={`py-3 transition-all ${event.completed ? 'opacity-60' : ''}`}>
+    <div className={`py-3 transition-all ${event.completed ? 'opacity-60' : ''} relative`}>
+      {event.completed && (
+        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full border-t-2 border-green-500/40 dark:border-green-500/20"></div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">

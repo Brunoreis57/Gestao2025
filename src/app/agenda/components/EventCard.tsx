@@ -61,7 +61,12 @@ const EventCard = ({ event, onComplete, onEdit, onDelete }: EventCardProps) => {
   };
 
   return (
-    <div className={`p-3 rounded-lg border transition-all ${getMarkerStyles()}`}>
+    <div className={`p-3 rounded-lg border transition-all ${getMarkerStyles()} relative ${event.completed ? 'overflow-hidden' : ''}`}>
+      {event.completed && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full border-t-2 border-green-500/50 dark:border-green-500/30 transform -rotate-5"></div>
+        </div>
+      )}
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white line-clamp-1">

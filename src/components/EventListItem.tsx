@@ -34,7 +34,12 @@ function EventListItem({ event, onComplete, onEdit, onDelete }: EventListItemPro
       event.completed
         ? 'bg-green-50/50 dark:bg-green-900/10'
         : ''
-    }`}>
+    } relative`}>
+      {event.completed && (
+        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full border-t-2 border-green-500/40 dark:border-green-500/20"></div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <h3 className="text-base font-medium text-gray-900 dark:text-white">
