@@ -266,7 +266,7 @@ export default function Home() {
                       let bgColorClass = 'bg-gray-50 dark:bg-gray-700';
                       
                       if (event.completed) {
-                        bgColorClass = 'bg-green-50 dark:bg-green-900/20';
+                        bgColorClass = 'bg-green-50/30 dark:bg-green-900/10';
                       } else if (event.marker) {
                         const color = event.marker.color;
                         if (color === 'red') bgColorClass = 'bg-red-50 dark:bg-red-900/20';
@@ -281,13 +281,18 @@ export default function Home() {
                       return (
                         <div
                           key={event.id}
-                          className={`p-2 rounded-lg text-sm ${bgColorClass} text-gray-700 dark:text-gray-200 hover:shadow-sm transition-shadow`}
+                          className={`p-2 rounded-lg text-sm ${bgColorClass} ${event.completed ? 'opacity-50 relative' : ''} text-gray-700 dark:text-gray-200 hover:shadow-sm transition-shadow`}
                         >
+                          {event.completed && (
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <div className="w-full border-t-2 border-green-500/40 dark:border-green-500/20 transform -rotate-5"></div>
+                            </div>
+                          )}
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{event.title}</p>
+                              <p className={`font-medium truncate ${event.completed ? 'text-gray-500 dark:text-gray-400' : ''}`}>{event.title}</p>
                               {event.time && (
-                                <p className="text-xs opacity-75">{event.time}</p>
+                                <p className={`text-xs ${event.completed ? 'text-gray-400/80 dark:text-gray-500/80' : 'opacity-75'}`}>{event.time}</p>
                               )}
                             </div>
                             {!event.completed && (
@@ -299,9 +304,18 @@ export default function Home() {
                                 <FaCheckCircle className="w-5 h-5" />
                               </button>
                             )}
+                            {event.completed && (
+                              <button
+                                onClick={() => toggleEventCompletion(event.id)}
+                                className="p-1 rounded-full bg-green-100/50 text-green-700/70 hover:bg-green-100 hover:text-green-700 transition-colors flex-shrink-0 ml-2"
+                                title="Desmarcar como concluído"
+                              >
+                                <FaCheckCircle className="w-5 h-5" />
+                              </button>
+                            )}
                           </div>
                           {event.marker && (
-                            <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs bg-white/50 dark:bg-black/20 text-gray-700 dark:text-gray-200">
+                            <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs bg-white/50 dark:bg-black/20 ${event.completed ? 'text-gray-500 dark:text-gray-400 opacity-60' : 'text-gray-700 dark:text-gray-200'}`}>
                               {event.marker.name}
                             </span>
                           )}
@@ -391,7 +405,7 @@ export default function Home() {
                       let bgColorClass = 'bg-gray-100 dark:bg-gray-700';
                       
                       if (event.completed) {
-                        bgColorClass = 'bg-green-100 dark:bg-green-900/30';
+                        bgColorClass = 'bg-green-100/30 dark:bg-green-900/20';
                       } else if (event.marker) {
                         const color = event.marker.color;
                         if (color === 'red') bgColorClass = 'bg-red-100 dark:bg-red-900/30';
@@ -406,10 +420,17 @@ export default function Home() {
                       return (
                         <div 
                           key={event.id}
-                          className={`px-2 py-1 text-xs truncate rounded ${bgColorClass} text-gray-700 dark:text-gray-200`}
+                          className={`px-2 py-1 text-xs truncate rounded ${bgColorClass} ${event.completed ? 'opacity-50 relative' : ''} text-gray-700 dark:text-gray-200`}
                           title={event.title}
                         >
-                          {event.title}
+                          {event.completed && (
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <div className="w-full border-t border-green-500/40 dark:border-green-500/20"></div>
+                            </div>
+                          )}
+                          <span className={event.completed ? 'text-gray-500 dark:text-gray-400' : ''}>
+                            {event.title}
+                          </span>
                         </div>
                       );
                     })}
