@@ -36,7 +36,7 @@ const EventListItem = ({ event, onComplete, onEdit, onDelete }: EventListItemPro
   };
 
   return (
-    <div className={`py-3 transition-all ${event.completed ? 'opacity-60' : ''} relative`}>
+    <div className={`py-3 transition-all ${event.completed ? 'opacity-50 bg-gray-50/50 dark:bg-gray-800/30' : ''} relative`}>
       {event.completed && (
         <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center pointer-events-none">
           <div className="w-full border-t-2 border-green-500/40 dark:border-green-500/20"></div>
@@ -44,20 +44,22 @@ const EventListItem = ({ event, onComplete, onEdit, onDelete }: EventListItemPro
       )}
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+          <h3 className={`text-base font-semibold ${event.completed ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
             {event.title}
           </h3>
           {event.date && (
-            <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+            <p className={`text-xs ${event.completed ? 'text-gray-500/70 dark:text-gray-500/70' : 'text-gray-600 dark:text-gray-300'} mt-0.5`}>
               {formatDate(event.date)}
               {event.time && ` às ${event.time}`}
             </p>
           )}
           {event.description && (
-            <p className="mt-1 text-sm text-gray-700 dark:text-gray-300 line-clamp-1">{event.description}</p>
+            <p className={`mt-1 text-sm ${event.completed ? 'text-gray-500/80 dark:text-gray-500/70' : 'text-gray-700 dark:text-gray-300'} line-clamp-1`}>
+              {event.description}
+            </p>
           )}
           {event.marker && (
-            <span className={`inline-block mt-1.5 px-1.5 py-0.5 rounded-full text-xs ${getMarkerBadgeStyles()}`}>
+            <span className={`inline-block mt-1.5 px-1.5 py-0.5 rounded-full text-xs ${event.completed ? 'opacity-60' : ''} ${getMarkerBadgeStyles()}`}>
               {event.marker.name}
             </span>
           )}

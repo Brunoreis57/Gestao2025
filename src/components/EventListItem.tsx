@@ -32,7 +32,7 @@ function EventListItem({ event, onComplete, onEdit, onDelete }: EventListItemPro
   return (
     <div className={`py-3 px-4 border-b last:border-b-0 transition-all ${
       event.completed
-        ? 'bg-green-50/50 dark:bg-green-900/10'
+        ? 'bg-green-50/30 dark:bg-green-900/10 opacity-50'
         : ''
     } relative`}>
       {event.completed && (
@@ -42,18 +42,18 @@ function EventListItem({ event, onComplete, onEdit, onDelete }: EventListItemPro
       )}
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <h3 className="text-base font-medium text-gray-900 dark:text-white">
+          <h3 className={`text-base font-medium ${event.completed ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
             {event.title}
           </h3>
           <div className="flex items-center gap-2 mt-1">
             {event.date && (
-              <span className="text-sm text-gray-600 dark:text-gray-300">
+              <span className={`text-sm ${event.completed ? 'text-gray-500/70 dark:text-gray-500/70' : 'text-gray-600 dark:text-gray-300'}`}>
                 {new Date(event.date).toLocaleDateString('pt-BR')}
                 {event.time && ` às ${event.time}`}
               </span>
             )}
             {event.marker && (
-              <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${getMarkerBadgeStyles()}`}>
+              <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${event.completed ? 'opacity-60' : ''} ${getMarkerBadgeStyles()}`}>
                 {event.marker.name}
               </span>
             )}

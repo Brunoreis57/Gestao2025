@@ -12,7 +12,7 @@ interface EventCardProps {
 function EventCard({ event, onComplete, onEdit, onDelete }: EventCardProps) {
   const getMarkerStyles = () => {
     if (event.completed) {
-      return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+      return 'bg-green-50/30 dark:bg-green-900/10 border-green-200/40 dark:border-green-800/30';
     }
     
     if (event.marker) {
@@ -55,7 +55,7 @@ function EventCard({ event, onComplete, onEdit, onDelete }: EventCardProps) {
   };
 
   return (
-    <div className={`p-4 rounded-lg border transition-all ${getMarkerStyles()} relative ${event.completed ? 'overflow-hidden' : ''}`}>
+    <div className={`p-4 rounded-lg border transition-all ${getMarkerStyles()} relative ${event.completed ? 'overflow-hidden opacity-60' : ''}`}>
       {event.completed && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-full border-t-2 border-green-500/50 dark:border-green-500/30 transform -rotate-5"></div>
@@ -63,20 +63,22 @@ function EventCard({ event, onComplete, onEdit, onDelete }: EventCardProps) {
       )}
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className={`text-lg font-semibold ${event.completed ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
             {event.title}
           </h3>
           {event.date && (
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className={`text-sm ${event.completed ? 'text-gray-500/70 dark:text-gray-500/70' : 'text-gray-600 dark:text-gray-300'}`}>
               {new Date(event.date).toLocaleDateString('pt-BR')}
               {event.time && ` às ${event.time}`}
             </p>
           )}
           {event.description && (
-            <p className="mt-2 text-gray-700 dark:text-gray-300">{event.description}</p>
+            <p className={`mt-2 ${event.completed ? 'text-gray-500/80 dark:text-gray-500/70' : 'text-gray-700 dark:text-gray-300'}`}>
+              {event.description}
+            </p>
           )}
           {event.marker && (
-            <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-xs ${getMarkerBadgeStyles()}`}>
+            <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-xs ${event.completed ? 'opacity-60' : ''} ${getMarkerBadgeStyles()}`}>
               {event.marker.name}
             </span>
           )}
