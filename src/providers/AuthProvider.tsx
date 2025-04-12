@@ -5,7 +5,14 @@ import { ReactNode, useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 
 // Rotas públicas que não requerem autenticação
-const publicRoutes = ['/login', '/login/recuperar-senha', '/login/redefinir-senha'];
+const publicRoutes = [
+  '/login', 
+  '/login/recuperar-senha', 
+  '/login/redefinir-senha',
+  '/recuperar-senha',
+  '/cadastro',
+  '/resetar-senha'
+];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -28,6 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return pathname?.startsWith(route);
   });
+
+  console.log('AuthProvider: Rota atual:', pathname, 'é pública:', isPublicRoute);
 
   // Se a rota for pública, renderiza o conteúdo diretamente
   if (isPublicRoute) {

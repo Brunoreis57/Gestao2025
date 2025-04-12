@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/contexts/AuthContext';
 import { FaSpinner } from 'react-icons/fa';
 
 export default function ProtectedRoute({
@@ -10,7 +10,7 @@ export default function ProtectedRoute({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading: authLoading, user } = useAuthStore();
+  const { user, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -18,12 +18,12 @@ export default function ProtectedRoute({
     // Verificar se o usuário está autenticado
     if (!authLoading) {
       console.log('ProtectedRoute: Estado de autenticação -', { 
-        isAuthenticated, 
+        isAuthenticated: !!user, 
         user: user ? `${user.name} (${user.email})` : 'nenhum', 
         authLoading 
       });
       
-      if (!isAuthenticated) {
+      if (!user) {
         console.log('ProtectedRoute: Usuário não autenticado, redirecionando para login');
         // Redirecionar para a página de login se não estiver autenticado
         router.replace('/login');
@@ -33,7 +33,7 @@ export default function ProtectedRoute({
         setIsLoading(false);
       }
     }
-  }, [isAuthenticated, authLoading, router, user]);
+  }, [user, authLoading, router]);
 
   // Limpar dados de autenticação inválidos se necessário
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function ProtectedRoute({
     checkAuthStorage();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
         <FaSpinner className="animate-spin h-12 w-12 text-primary" />

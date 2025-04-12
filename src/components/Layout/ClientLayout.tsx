@@ -3,7 +3,7 @@
 import { ThemeProvider } from 'next-themes';
 import Sidebar from '@/components/Layout/Sidebar';
 import BottomNavigation from '@/components/BottomNavigation';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/providers/AuthProvider';
 
 export default function ClientLayout({
   children,
