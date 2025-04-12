@@ -1,134 +1,139 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { FaLock, FaEnvelope } from 'react-icons/fa';
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { useAuthStore } from '@/store/authStore';
+import { FiMail, FiArrowLeft } from 'react-icons/fi';
 
 export default function RecuperarSenhaPage() {
-  const router = useRouter();
-  const { resetPassword, isAuthenticated, isLoading, error } = useAuthStore();
-  
+  const { resetPassword, error: authError, clearError, isLoading } = useAuth();
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'initial' | 'submitting' | 'success' | 'error'>('initial');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [formError, setFormError] = useState('');
 
-  // Redirecionar para a página inicial se já estiver autenticado
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      setFormError('O email é obrigatório');
+      return false;
     }
-  }, [isAuthenticated, router]);
+    if (!emailRegex.test(email)) {
+      setFormError('Digite um email válido');
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErrorMessage('Por favor, insira um endereço de email válido.');
-      return;
-    }
-    
-    setStatus('submitting');
-    setErrorMessage(null);
-    
+    setFormError('');
+    clearError();
+    setSuccess(false);
+
+    if (!validateEmail(email)) return;
+
     try {
       await resetPassword(email);
-      setStatus('success');
+      setSuccess(true);
+      setEmail('');
     } catch (error) {
-      setStatus('error');
-      if (error === 'Email não encontrado') {
-        setErrorMessage('Este email não está cadastrado em nosso sistema.');
-      } else {
-        setErrorMessage('Ocorreu um erro ao processar sua solicitação. Tente novamente.');
-      }
+      console.error('Erro ao resetar senha:', error);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
-              <FaLock className="h-8 w-8 text-blue-600 dark:text-blue-300" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Recuperação de Senha</h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Informe seu email para receber as instruções de recuperação de senha
-            </p>
-          </div>
-          
-          {status === 'success' ? (
-            <div className="text-center">
-              <div className="mb-4 p-4 bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200 rounded-md">
-                <p>Uma mensagem com instruções para redefinir sua senha foi enviada para <strong>{email}</strong>.</p>
-                <p className="mt-2">Verifique sua caixa de entrada e siga as instruções.</p>
-              </div>
-              <div className="mt-6">
-                <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
-                  Voltar para a página de login
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {errorMessage && (
-                <div className="p-4 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-md">
-                  {errorMessage}
-                </div>
-              )}
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaEnvelope className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={status === 'submitting'}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
-                    placeholder="seu@email.com"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <button
-                  type="submit"
-                  disabled={status === 'submitting'}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {status === 'submitting' ? 'Enviando...' : 'Enviar Instruções'}
-                </button>
-              </div>
-              
-              <div className="text-center mt-4">
-                <Link href="/login" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                  Voltar para o login
-                </Link>
-              </div>
-            </form>
-          )}
-        </div>
-        
-        <div className="text-center mt-6">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Não tem uma conta?{' '}
-            <Link href="/cadastro" className="font-medium text-blue-600 dark:text-blue-400 hover:underline">
-              Cadastre-se
-            </Link>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+            Recuperar Senha
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+            Digite seu email para receber as instruções de recuperação de senha
           </p>
         </div>
+
+        {success ? (
+          <div className="rounded-md bg-green-50 dark:bg-green-900/50 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  Email enviado com sucesso! Verifique sua caixa de entrada.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="email" className="sr-only">Email</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiMail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setFormError('');
+                  }}
+                  className={`appearance-none rounded-lg relative block w-full pl-10 pr-3 py-2 border ${
+                    formError || authError ? 'border-red-500' : 'border-gray-300'
+                  } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400`}
+                  placeholder="Seu email"
+                />
+              </div>
+              {(formError || authError) && (
+                <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                  {formError || authError}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Link
+                href="/login"
+                className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
+              >
+                <FiArrowLeft className="mr-2 h-4 w-4" />
+                Voltar para o login
+              </Link>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                  isLoading 
+                    ? 'bg-primary-400 cursor-not-allowed'
+                    : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
+                }`}
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Enviando...
+                  </>
+                ) : (
+                  'Enviar instruções'
+                )}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
