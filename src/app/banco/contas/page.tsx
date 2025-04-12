@@ -25,10 +25,10 @@ export default function ContasPage() {
 
   // Estados para o formulário de nova dívida
   const [newDebt, setNewDebt] = useState({
-    name: '',
-    value: '',
-    category: '',
-    dueDate: '',
+    description: '',
+    amount: '',
+    categoryId: '',
+    date: '',
     paid: false
   });
 
@@ -37,17 +37,17 @@ export default function ContasPage() {
   const [newCategoryDescription, setNewCategoryDescription] = useState('');
   
   // Estados para edição de dívida
-  const [editingDebtId, setEditingDebtId] = useState<number | null>(null);
+  const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
   const [editDebt, setEditDebt] = useState({
-    name: '',
-    value: '',
-    category: '',
-    dueDate: '',
+    description: '',
+    amount: '',
+    categoryId: '',
+    date: '',
     paid: false
   });
 
   // Estados para edição de categoria
-  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editCategory, setEditCategory] = useState({
     name: '',
     description: ''
@@ -64,25 +64,25 @@ export default function ContasPage() {
   const handleAddDebt = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newDebt.name || !newDebt.value || !newDebt.category || !newDebt.dueDate) {
+    if (!newDebt.description || !newDebt.amount || !newDebt.categoryId || !newDebt.date) {
       alert('Por favor, preencha todos os campos');
       return;
     }
     
     addPersonalDebt({
-      name: newDebt.name,
-      value: parseFloat(newDebt.value),
-      category: newDebt.category,
-      dueDate: newDebt.dueDate,
+      description: newDebt.description,
+      amount: parseFloat(newDebt.amount),
+      categoryId: newDebt.categoryId,
+      date: newDebt.date,
       paid: false
     });
     
     // Limpar formulário
     setNewDebt({
-      name: '',
-      value: '',
-      category: '',
-      dueDate: '',
+      description: '',
+      amount: '',
+      categoryId: '',
+      date: '',
       paid: false
     });
   };
@@ -109,10 +109,10 @@ export default function ContasPage() {
   const startEditDebt = (debt: any) => {
     setEditingDebtId(debt.id);
     setEditDebt({
-      name: debt.name,
-      value: debt.value.toString(),
-      category: debt.category,
-      dueDate: debt.dueDate,
+      description: debt.description,
+      amount: debt.amount.toString(),
+      categoryId: debt.categoryId,
+      date: debt.date,
       paid: debt.paid
     });
   };
@@ -128,17 +128,17 @@ export default function ContasPage() {
 
   // Função para salvar edição de dívida
   const saveEditDebt = () => {
-    if (!editDebt.name || !editDebt.value || !editDebt.category || !editDebt.dueDate) {
+    if (!editDebt.description || !editDebt.amount || !editDebt.categoryId || !editDebt.date) {
       alert('Por favor, preencha todos os campos');
       return;
     }
     
     if (editingDebtId !== null) {
       updatePersonalDebt(editingDebtId, {
-        name: editDebt.name,
-        value: parseFloat(editDebt.value),
-        category: editDebt.category,
-        dueDate: editDebt.dueDate,
+        description: editDebt.description,
+        amount: parseFloat(editDebt.amount),
+        categoryId: editDebt.categoryId,
+        date: editDebt.date,
         paid: editDebt.paid
       });
       
@@ -164,11 +164,11 @@ export default function ContasPage() {
   };
 
   // Cálculos para os cards
-  const totalDebts = personalDebts.reduce((sum, debt) => sum + debt.value, 0);
+  const totalDebts = personalDebts.reduce((sum, debt) => sum + debt.amount, 0);
   const pendingDebts = personalDebts.filter(debt => !debt.paid);
   const paidDebts = personalDebts.filter(debt => debt.paid);
-  const totalPending = pendingDebts.reduce((sum, debt) => sum + debt.value, 0);
-  const totalPaid = paidDebts.reduce((sum, debt) => sum + debt.value, 0);
+  const totalPending = pendingDebts.reduce((sum, debt) => sum + debt.amount, 0);
+  const totalPaid = paidDebts.reduce((sum, debt) => sum + debt.amount, 0);
 
   // Formate um valor monetário
   const formatCurrency = (value: number) => {
@@ -262,28 +262,28 @@ export default function ContasPage() {
           <form onSubmit={handleAddDebt} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Nome
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Descrição
                 </label>
                 <input
                   type="text"
-                  id="name"
-                  value={newDebt.name}
-                  onChange={(e) => setNewDebt({...newDebt, name: e.target.value})}
+                  id="description"
+                  value={newDebt.description}
+                  onChange={(e) => setNewDebt({...newDebt, description: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary dark:bg-gray-700 dark:text-white"
                   placeholder="Descrição da dívida"
                 />
               </div>
               
               <div>
-                <label htmlFor="value" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Valor
                 </label>
                 <input
                   type="number"
-                  id="value"
-                  value={newDebt.value}
-                  onChange={(e) => setNewDebt({...newDebt, value: e.target.value})}
+                  id="amount"
+                  value={newDebt.amount}
+                  onChange={(e) => setNewDebt({...newDebt, amount: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary dark:bg-gray-700 dark:text-white"
                   placeholder="0,00"
                   step="0.01"
@@ -291,31 +291,31 @@ export default function ContasPage() {
               </div>
               
               <div>
-                <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Data de Vencimento
                 </label>
                 <input
                   type="date"
-                  id="dueDate"
-                  value={newDebt.dueDate}
-                  onChange={(e) => setNewDebt({...newDebt, dueDate: e.target.value})}
+                  id="date"
+                  value={newDebt.date}
+                  onChange={(e) => setNewDebt({...newDebt, date: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary dark:bg-gray-700 dark:text-white"
                 />
               </div>
               
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Categoria
                 </label>
                 <select
-                  id="category"
-                  value={newDebt.category}
-                  onChange={(e) => setNewDebt({...newDebt, category: e.target.value})}
+                  id="categoryId"
+                  value={newDebt.categoryId}
+                  onChange={(e) => setNewDebt({...newDebt, categoryId: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary dark:bg-gray-700 dark:text-white"
                 >
                   <option value="">Selecione uma categoria</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
               </div>
@@ -519,35 +519,35 @@ export default function ContasPage() {
                         <td className="px-4 py-3 whitespace-nowrap">
                           <input
                             type="text"
-                            value={editDebt.name}
-                            onChange={(e) => setEditDebt({...editDebt, name: e.target.value})}
+                            value={editDebt.description}
+                            onChange={(e) => setEditDebt({...editDebt, description: e.target.value})}
                             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary dark:bg-gray-700 dark:text-white"
                           />
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <select
-                            value={editDebt.category}
-                            onChange={(e) => setEditDebt({...editDebt, category: e.target.value})}
+                            value={editDebt.categoryId}
+                            onChange={(e) => setEditDebt({...editDebt, categoryId: e.target.value})}
                             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary dark:bg-gray-700 dark:text-white"
                           >
                             {categories.map((cat) => (
-                              <option key={cat.id} value={cat.name}>{cat.name}</option>
+                              <option key={cat.id} value={cat.id}>{cat.name}</option>
                             ))}
                           </select>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <input
                             type="date"
-                            value={editDebt.dueDate}
-                            onChange={(e) => setEditDebt({...editDebt, dueDate: e.target.value})}
+                            value={editDebt.date}
+                            onChange={(e) => setEditDebt({...editDebt, date: e.target.value})}
                             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary dark:bg-gray-700 dark:text-white"
                           />
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <input
                             type="number"
-                            value={editDebt.value}
-                            onChange={(e) => setEditDebt({...editDebt, value: e.target.value})}
+                            value={editDebt.amount}
+                            onChange={(e) => setEditDebt({...editDebt, amount: e.target.value})}
                             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary dark:bg-gray-700 dark:text-white"
                             step="0.01"
                           />
@@ -583,19 +583,21 @@ export default function ContasPage() {
                       // Modo de visualização
                       <>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{debt.name}</div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{debt.category}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{debt.description}</div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(debt.dueDate).toLocaleDateString('pt-BR')}
+                            {categories.find(cat => cat.id === debt.categoryId)?.name || 'Sem categoria'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(debt.date).toLocaleDateString('pt-BR')}
                           </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {formatCurrency(debt.value)}
+                            {formatCurrency(debt.amount)}
                           </div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
