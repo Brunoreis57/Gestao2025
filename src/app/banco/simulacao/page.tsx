@@ -103,11 +103,11 @@ export default function SimulacaoPage() {
       };
     }
     
-    const totalNetEarnings = uberSimulations.reduce((sum, sim) => sum + sim.netEarnings, 0);
-    const totalHours = uberSimulations.reduce((sum, sim) => sum + sim.hoursWorked, 0);
-    const totalDistance = uberSimulations.reduce((sum, sim) => sum + sim.distance, 0);
-    const totalFuelCost = uberSimulations.reduce((sum, sim) => sum + sim.fuelCost, 0);
-    const totalConsumption = uberSimulations.reduce((sum, sim) => sum + sim.consumption, 0);
+    const totalNetEarnings = uberSimulations.reduce((sum, sim) => sum + Number(sim.netEarnings), 0);
+    const totalHours = uberSimulations.reduce((sum, sim) => sum + Number(sim.hoursWorked), 0);
+    const totalDistance = uberSimulations.reduce((sum, sim) => sum + Number(sim.distance), 0);
+    const totalFuelCost = uberSimulations.reduce((sum, sim) => sum + Number(sim.fuelCost), 0);
+    const totalConsumption = uberSimulations.reduce((sum, sim) => sum + Number(sim.consumption), 0);
     
     // Cálculo de médias
     const avgConsumption = totalConsumption / uberSimulations.length;
@@ -167,18 +167,30 @@ export default function SimulacaoPage() {
       const fuelPrice = (5 + Math.random() * 2).toFixed(2); // Entre 5 e 7 reais
       const earnings = (80 + Math.random() * 220).toFixed(2); // Entre 80 e 300 reais
       
+      // Calcula os valores derivados
+      const hoursWorkedNum = parseFloat(hoursWorked);
+      const distanceNum = parseFloat(distance);
+      const consumptionNum = parseFloat(consumption);
+      const fuelPriceNum = parseFloat(fuelPrice);
+      const earningsNum = parseFloat(earnings);
+      
+      const fuelCost = (distanceNum / consumptionNum) * fuelPriceNum;
+      const netEarnings = earningsNum - fuelCost;
+      const earningsPerHour = netEarnings / hoursWorkedNum;
+      const earningsPerKm = netEarnings / distanceNum;
+      
       return {
         id: `demo-${Date.now()}-${index}`,
         date: date.toISOString().split('T')[0], // Formato yyyy-mm-dd
-        hoursWorked: parseFloat(hoursWorked),
-        distance: parseFloat(distance),
-        consumption: parseFloat(consumption),
-        fuelPrice: parseFloat(fuelPrice),
-        earnings: parseFloat(earnings),
-        fuelCost: (parseFloat(distance) / parseFloat(consumption) * parseFloat(fuelPrice)).toFixed(2),
-        netEarnings: (parseFloat(earnings) - (parseFloat(distance) / parseFloat(consumption) * parseFloat(fuelPrice))).toFixed(2),
-        earningsPerHour: (parseFloat(earnings) / parseFloat(hoursWorked)).toFixed(2),
-        earningsPerKm: (parseFloat(earnings) / parseFloat(distance)).toFixed(2)
+        hoursWorked: hoursWorkedNum,
+        distance: distanceNum,
+        consumption: consumptionNum,
+        fuelPrice: fuelPriceNum,
+        earnings: earningsNum,
+        fuelCost,
+        netEarnings,
+        earningsPerHour,
+        earningsPerKm
       };
     });
     
@@ -190,7 +202,11 @@ export default function SimulacaoPage() {
         distance: sim.distance,
         consumption: sim.consumption,
         fuelPrice: sim.fuelPrice,
-        earnings: sim.earnings
+        earnings: sim.earnings,
+        fuelCost: sim.fuelCost,
+        netEarnings: sim.netEarnings,
+        earningsPerHour: sim.earningsPerHour,
+        earningsPerKm: sim.earningsPerKm
       });
     });
   };

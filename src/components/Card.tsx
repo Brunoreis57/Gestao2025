@@ -1,13 +1,32 @@
 'use client';
 
+import React, { ReactNode } from 'react';
+
 interface CardProps {
   title: string;
-  value: number;
+  value: number | string;
+  icon?: ReactNode;
+  description?: string;
+  trend?: number;
+  animate?: boolean;
   type?: 'default' | 'success' | 'blue' | 'danger' | 'warning';
 }
 
-export default function Card({ title, value, type = 'default' }: CardProps) {
-  const formatValue = (value: number) => {
+export default function Card({ 
+  title, 
+  value, 
+  icon, 
+  description, 
+  trend, 
+  animate = false, 
+  type = 'default' 
+}: CardProps) {
+  const formatValue = (value: number | string) => {
+    // Se o valor já for uma string, retorna diretamente
+    if (typeof value === 'string') {
+      return value;
+    }
+    
     // Formatação para exibir o valor como moeda se for possível
     if (Math.abs(value) < 1000) {
       return value.toLocaleString('pt-BR', {
@@ -74,6 +93,29 @@ export default function Card({ title, value, type = 'default' }: CardProps) {
 
   const styles = getStyles();
 
+  const renderTrend = () => {
+    if (trend === undefined) return null;
+    
+    const isPositive = trend > 0;
+    const trendAbs = Math.abs(trend);
+    const percentage = (trendAbs * 100).toFixed(1);
+    
+    return (
+      <div className={`flex items-center text-xs mt-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+        {isPositive ? (
+          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+        ) : (
+          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
+        <span>{percentage}%</span>
+      </div>
+    );
+  };
+
   return (
     <div
       className={`
@@ -81,14 +123,28 @@ export default function Card({ title, value, type = 'default' }: CardProps) {
         transform hover:scale-[1.02] hover:shadow-md
         ${styles.background} ${styles.border} ${styles.shadow} ${styles.hover}
         w-full flex flex-col
+        ${animate ? 'animate-fade-in' : ''}
       `}
     >
-      <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 truncate">
-        {title}
-      </h3>
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+          {title}
+        </h3>
+        {icon && (
+          <div className={`${styles.icon}`}>
+            {icon}
+          </div>
+        )}
+      </div>
       <p className={`text-2xl font-bold ${styles.text} mt-auto`}>
         {formatValue(value)}
       </p>
+      {description && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {description}
+        </p>
+      )}
+      {renderTrend()}
     </div>
   );
 } 

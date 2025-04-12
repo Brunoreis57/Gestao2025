@@ -317,7 +317,8 @@ export const useAuthStore = create<AuthState>()(
           predefinedUsers.push({
             email: pendingUser.email,
             password: pendingUser.password,
-            name: pendingUser.name
+            name: pendingUser.name,
+            isAdmin: false // Por padrão, novos usuários não são administradores
           });
           
           // Remover usuário da lista de pendentes
