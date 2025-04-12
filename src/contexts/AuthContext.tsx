@@ -18,6 +18,14 @@ interface AuthContextType {
   clearError: () => void;
 }
 
+export interface User {
+  uid: string;
+  email: string | null;
+  name: string;
+  isAdmin: boolean;
+  createdAt: Date;
+}
+
 const AuthContext = createContext<AuthContextType>({
   user: null,
   firebaseUser: null,
@@ -69,7 +77,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      setUser(userCredential.user);
+      const userDetails = await getCurrentUser(userCredential.user);
+      setFirebaseUser(userCredential.user);
+      setUser(userDetails);
     } catch (error: any) {
       console.error("Erro no login:", error);
       setError(translateFirebaseError(error.code) || 'Ocorreu um erro durante o login');
