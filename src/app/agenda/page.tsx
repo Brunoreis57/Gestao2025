@@ -214,7 +214,10 @@ export default function AgendaPage() {
 
               {expandedMonths.includes(monthKey) && (
                 <div className="space-y-4">
-                  {Object.entries(monthData.markerGroups).map(([markerName, markerEvents]: [string, Event[]]) => (
+                  {Object.entries(monthData.markerGroups).map((entry) => {
+                    const markerName = entry[0];
+                    const markerEvents = entry[1] as Event[];
+                    return (
                     <div key={markerName} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3">
                       <h3 className="text-md font-medium text-gray-900 dark:text-white mb-3">
                         {markerName}
@@ -248,7 +251,8 @@ export default function AgendaPage() {
                           ))}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
