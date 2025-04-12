@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import Link from 'next/link';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated, isLoading, error } = useAuthStore();
+  const { login, user, isLoading, error, clearError } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,12 +17,12 @@ export default function LoginPage() {
 
   // Redirecionar para a página inicial se já estiver autenticado
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [user, router]);
 
-  // Atualizar erro do formulário quando o erro do authStore mudar
+  // Atualizar erro do formulário quando o erro do contexto mudar
   useEffect(() => {
     if (error) {
       setFormError(error);
@@ -32,13 +32,20 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    clearError();
     
     if (!email || !password) {
       setFormError('Por favor, preencha todos os campos.');
       return;
     }
     
-    await login(email, password);
+    try {
+      await login(email, password);
+      // Se chegou aqui, o login foi bem-sucedido
+    } catch (error) {
+      // O erro já está sendo tratado no contexto
+      console.error('Erro no login:', error);
+    }
   };
 
   return (

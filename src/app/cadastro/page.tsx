@@ -3,7 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/contexts/AuthContext';
 import { FaUser, FaLock, FaEnvelope, FaSpinner, FaArrowLeft } from 'react-icons/fa';
 
 export default function CadastroPage() {
@@ -16,18 +16,27 @@ export default function CadastroPage() {
   const [formState, setFormState] = useState<'initial' | 'submitting' | 'success' | 'error'>('initial');
   const [errorMessage, setErrorMessage] = useState('');
   
-  const { register, isAuthenticated } = useAuthStore();
+  const { register, user, isLoading, error, clearError } = useAuth();
   const router = useRouter();
 
   // Se o usuário já estiver autenticado, redirecionar para a página inicial
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [user, router]);
+
+  // Atualizar mensagem de erro quando o erro do contexto mudar
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+      setFormState('error');
+    }
+  }, [error]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    clearError();
     
     // Validação dos campos
     if (!name || !email || !password || !confirmPassword) {
@@ -53,7 +62,7 @@ export default function CadastroPage() {
       setFormState('success');
     } catch (error: any) {
       setFormState('error');
-      setErrorMessage(error?.message || 'Ocorreu um erro durante o cadastro. Tente novamente.');
+      // O erro já é tratado pelo contexto e atualizado via useEffect
     }
   };
 
@@ -72,7 +81,7 @@ export default function CadastroPage() {
             <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 p-4 rounded-md">
               <p className="font-medium">Cadastro realizado com sucesso!</p>
               <p className="mt-2 text-sm">
-                Sua solicitação foi enviada para análise. Você receberá uma confirmação por email quando sua conta for ativada.
+                Sua conta foi criada. Você já pode começar a usar o sistema.
               </p>
             </div>
             <Link 
@@ -110,7 +119,7 @@ export default function CadastroPage() {
                     placeholder="Seu nome completo"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    disabled={formState === 'submitting'}
+                    disabled={formState === 'submitting' || isLoading}
                   />
                 </div>
               </div>
@@ -133,7 +142,7 @@ export default function CadastroPage() {
                     placeholder="Seu email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={formState === 'submitting'}
+                    disabled={formState === 'submitting' || isLoading}
                   />
                 </div>
               </div>
@@ -156,7 +165,7 @@ export default function CadastroPage() {
                     placeholder="Crie uma senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={formState === 'submitting'}
+                    disabled={formState === 'submitting' || isLoading}
                   />
                   <button 
                     type="button"
@@ -189,7 +198,7 @@ export default function CadastroPage() {
                     placeholder="Confirme sua senha"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    disabled={formState === 'submitting'}
+                    disabled={formState === 'submitting' || isLoading}
                   />
                   <button 
                     type="button"
@@ -212,10 +221,10 @@ export default function CadastroPage() {
 
                 <button
                   type="submit"
-                  disabled={formState === 'submitting'}
+                  disabled={formState === 'submitting' || isLoading}
                   className="py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 flex items-center"
                 >
-                  {formState === 'submitting' ? (
+                  {(formState === 'submitting' || isLoading) ? (
                     <>
                       <FaSpinner className="animate-spin h-5 w-5 mr-2" />
                       Cadastrando...
