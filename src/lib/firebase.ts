@@ -4,45 +4,45 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
-// Validação das variáveis de ambiente
-const requiredEnvVars = [
-  'NEXT_PUBLIC_FIREBASE_API_KEY',
-  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-  'NEXT_PUBLIC_FIREBASE_APP_ID'
-] as const;
+// Valores padrão para desenvolvimento local
+const defaultConfig = {
+  apiKey: "AIzaSyCIxcuiAS8SDsvyvOTKpCWPRqVeZOeReZ0",
+  authDomain: "gestao2025-a1990.firebaseapp.com",
+  projectId: "gestao2025-a1990",
+  storageBucket: "gestao2025-a1990.appspot.com",
+  messagingSenderId: "82754378633",
+  appId: "1:82754378633:web:cd2592340b7c82908f1f58"
+};
 
-// Verifica se todas as variáveis de ambiente necessárias estão definidas
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+// Obtém as variáveis de ambiente ou usa os valores padrão
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || defaultConfig.apiKey,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || defaultConfig.authDomain,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || defaultConfig.projectId,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || defaultConfig.storageBucket,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || defaultConfig.messagingSenderId,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || defaultConfig.appId
+};
 
-if (missingEnvVars.length > 0) {
-  console.error('Variáveis de ambiente ausentes:', missingEnvVars);
-  console.error('Por favor, crie um arquivo .env.local na raiz do projeto com as seguintes variáveis:');
-  console.error(`
-# Credenciais do Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY=seu_api_key_aqui
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=seu_auth_domain_aqui
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=seu_project_id_aqui
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=seu_storage_bucket_aqui
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=seu_messaging_sender_id_aqui
-NEXT_PUBLIC_FIREBASE_APP_ID=seu_app_id_aqui
-  `);
+// Log para verificação em desenvolvimento
+if (process.env.NODE_ENV === 'development') {
+  console.log('Firebase config:', {
+    apiKey: firebaseConfig.apiKey ? '**********' : 'ausente',
+    authDomain: firebaseConfig.authDomain ? 'disponível' : 'ausente',
+    projectId: firebaseConfig.projectId ? 'disponível' : 'ausente',
+    storageBucket: firebaseConfig.storageBucket ? 'disponível' : 'ausente',
+    messagingSenderId: firebaseConfig.messagingSenderId ? 'disponível' : 'ausente',
+    appId: firebaseConfig.appId ? 'disponível' : 'ausente'
+  });
   
-  if (process.env.NODE_ENV === 'development') {
-    throw new Error(`Variáveis de ambiente ausentes: ${missingEnvVars.join(', ')}`);
+  // Aviso sobre variáveis de ambiente
+  if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+    console.warn(
+      'Variáveis de ambiente não detectadas. Usando configuração padrão. ' +
+      'Para desenvolvimento local, crie um arquivo .env.local na raiz do projeto.'
+    );
   }
 }
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-};
 
 // Verifica se já existe uma instância do Firebase
 let app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
