@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaHome, FaCalendarAlt, FaWallet, FaUser } from 'react-icons/fa';
@@ -34,7 +34,7 @@ export default function BottomNavigation() {
   ];
 
   // Controle para ocultar/mostrar a barra de navegação ao rolar
-  const controlNavbar = () => {
+  const controlNavbar = useCallback(() => {
     if (typeof window !== 'undefined') {
       // Oculta em rolagens para baixo, mostra em rolagens para cima
       if (window.scrollY > lastScrollY && window.scrollY > 100) {
@@ -45,7 +45,7 @@ export default function BottomNavigation() {
       
       setLastScrollY(window.scrollY);
     }
-  };
+  }, [lastScrollY]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -56,7 +56,7 @@ export default function BottomNavigation() {
         window.removeEventListener('scroll', controlNavbar);
       };
     }
-  }, [lastScrollY]);
+  }, [controlNavbar]);
 
   const isActive = (path: string) => {
     if (path === '/') {
