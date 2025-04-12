@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
+import { User as FirebaseUser, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, confirmPasswordReset as firebaseConfirmPasswordReset } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { User, loginUser, registerUser, logoutUser, resetPassword, getCurrentUser } from '@/services/authService';
 
@@ -14,6 +14,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  confirmPasswordReset: (token: string, newPassword: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   register: async () => {},
   resetPassword: async () => {},
+  confirmPasswordReset: async () => {},
   clearError: () => {},
 });
 
@@ -66,8 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      const user = await loginUser(email, password);
-      setUser(user);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      setUser(userCredential.user);
     } catch (error: any) {
       console.error("Erro no login:", error);
       setError(translateFirebaseError(error.code) || 'Ocorreu um erro durante o login');
@@ -98,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      await logoutUser();
+      await signOut(auth);
       setUser(null);
       setFirebaseUser(null);
     } catch (error: any) {
@@ -110,15 +112,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const requestPasswordReset = async (email: string) => {
+  const resetPassword = async (email: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      await resetPassword(email);
+      await sendPasswordResetEmail(auth, email);
     } catch (error: any) {
       console.error("Erro na recuperação de senha:", error);
       setError(translateFirebaseError(error.code) || 'Ocorreu um erro ao solicitar recuperação de senha');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmPasswordReset = async (token: string, newPassword: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await firebaseConfirmPasswordReset(auth, token, newPassword);
+    } catch (error: any) {
+      console.error("Erro ao redefinir senha:", error);
+      setError(translateFirebaseError(error.code) || 'Ocorreu um erro ao redefinir senha');
       throw error;
     } finally {
       setIsLoading(false);
@@ -135,7 +152,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     register,
-    resetPassword: requestPasswordReset,
+    resetPassword,
+    confirmPasswordReset,
     clearError,
   };
 
