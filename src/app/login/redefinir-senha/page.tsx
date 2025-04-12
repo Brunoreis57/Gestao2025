@@ -1,12 +1,25 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import { FaLock, FaSpinner, FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
 
-export default function RedefinirSenhaPage() {
+// Componente de carregamento simples
+function Loading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md text-center">
+        <FaSpinner className="animate-spin h-8 w-8 mx-auto text-primary" />
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">Carregando...</h2>
+      </div>
+    </div>
+  );
+}
+
+// Componente principal que usa o useSearchParams
+function ResetPasswordForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -203,5 +216,14 @@ export default function RedefinirSenhaPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Componente principal com Suspense
+export default function RedefinirSenhaPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 } 
