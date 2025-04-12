@@ -47,11 +47,15 @@ interface PersonalDebt {
 interface UberSimulation {
   id: string;
   date: string;
-  workHours: number;
-  grossIncome: number;
-  fuelExpense: number;
-  otherExpenses: number;
-  notes?: string;
+  hoursWorked: number;
+  distance: number;
+  fuelPrice: number;
+  earnings: number;
+  consumption: number;
+  fuelCost: number;
+  netEarnings: number;
+  earningsPerHour: number;
+  earningsPerKm: number;
 }
 
 interface Store {
@@ -88,6 +92,7 @@ interface Store {
   addUberSimulation: (simulation: Omit<UberSimulation, 'id'>) => void;
   removeUberSimulation: (id: string) => void;
   updateUberSimulation: (id: string, simulation: Partial<UberSimulation>) => void;
+  clearAllSimulations: () => void;
 }
 
 export const useStore = create<Store>()(
@@ -227,6 +232,11 @@ export const useStore = create<Store>()(
           uberSimulations: state.uberSimulations.map((simulation) =>
             simulation.id === id ? { ...simulation, ...updatedSimulation } : simulation
           ),
+        })),
+        
+      clearAllSimulations: () =>
+        set((state) => ({
+          uberSimulations: [],
         })),
     }),
     {
