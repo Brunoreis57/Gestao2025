@@ -9,7 +9,7 @@ import {
   where, 
   orderBy 
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Interface para o tipo de simulação
