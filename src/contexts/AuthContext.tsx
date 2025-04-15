@@ -157,18 +157,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('AuthContext: Login Firebase bem-sucedido', { uid: userCredential.user.uid });
+      // Usando loginUser do authService que já integra a autenticação do Firebase
+      // com a busca de dados do usuário no Firestore
+      const userDetails = await loginUser(email, password);
+      console.log('AuthContext: Login bem-sucedido', { 
+        nome: userDetails.name, 
+        email: userDetails.email 
+      });
       
-      const userDetails = await getCurrentUser(userCredential.user);
-      if (userDetails) {
-        console.log('AuthContext: Detalhes do usuário obtidos com sucesso');
-        setFirebaseUser(userCredential.user);
-        setUser(userDetails);
-      } else {
-        console.error('AuthContext: Usuário não encontrado no Firestore após login');
-        throw new Error('Usuário não encontrado');
-      }
+      // O Firebase já atualizará o onAuthStateChanged, que definirá o firebaseUser
+      // então aqui só precisamos atualizar o user
+      setUser(userDetails);
     } catch (error: any) {
       console.error("AuthContext: Erro no login:", error);
       setError(translateFirebaseError(error.code) || 'Ocorreu um erro durante o login');
@@ -271,6 +270,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     }
   }, [authTimeoutDetected]);
+
+  // Adicionar verificação após inicialização do auth
+  useEffect(() => {
+    if (authInitialized && !isLoading) {
+      console.log('AuthContext: Estado de autenticação inicializado', { 
+        user: user ? `${user.name} (${user.email})` : 'não autenticado',
+        firebaseUser: firebaseUser ? 'presente' : 'ausente',
+        authTimeoutDetected
+      });
+      
+      // Verificar inconsistências entre firebaseUser e user
+      if (firebaseUser && !user) {
+        console.warn('AuthContext: Inconsistência detectada - firebaseUser existe mas user não');
+        // Tentar obter o user novamente
+        getCurrentUser(firebaseUser)
+          .then(userDetails => {
+            if (userDetails) {
+              console.log('AuthContext: Dados do usuário recuperados');
+              setUser(userDetails);
+            } else {
+              console.warn('AuthContext: Usuário não encontrado no Firestore, forçando logout');
+              signOut(auth).catch(e => console.error('Erro ao fazer logout automático', e));
+            }
+          })
+          .catch(error => {
+            console.error('AuthContext: Erro ao recuperar dados do usuário', error);
+          });
+      }
+    }
+  }, [authInitialized, isLoading, user, firebaseUser, authTimeoutDetected]);
 
   const value = {
     user,

@@ -36,14 +36,24 @@ export default function LoginPage() {
 
   // Verificar se o usuário já está autenticado
   useEffect(() => {
+    console.log('LoginPage: Verificando autenticação...', { 
+      user: user ? 'autenticado' : 'não autenticado', 
+      isLoading, 
+      redirectAttempted: redirectAttempted.current 
+    });
+    
     if (user && !redirectAttempted.current) {
       console.log('LoginPage: Usuário já autenticado, redirecionando para banco');
       redirectAttempted.current = true;
-      setTimeout(() => {
+      
+      // Usando setTimeout para garantir que o redirecionamento ocorra depois da renderização
+      const redirectTimer = setTimeout(() => {
         router.replace('/banco');
-      }, 100);
+      }, 500);
+      
+      return () => clearTimeout(redirectTimer);
     }
-  }, [user, router]);
+  }, [user, router, isLoading]);
 
   // Adicionar um tempo máximo para o estado de carregamento
   useEffect(() => {
@@ -368,6 +378,27 @@ export default function LoginPage() {
               )}
             </button>
           </div>
+
+          {/* Botão temporário para login rápido em desenvolvimento */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('teste@teste.com');
+                  setPassword('123456');
+                  console.log('LoginPage: Dados de teste preenchidos');
+                  setTimeout(() => {
+                    console.log('LoginPage: Enviando formulário com dados de teste');
+                    handleSubmit(new Event('submit') as any);
+                  }, 100);
+                }}
+                className="w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              >
+                Login rápido (apenas desenvolvimento)
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

@@ -44,7 +44,9 @@ export default function ProtectedRoute({
     if (!authLoading) {
       console.log('ProtectedRoute: Verificação de autenticação principal', { 
         isAuthenticated: !!user, 
-        user: user ? `${user.name} (${user.email})` : 'nenhum', 
+        user: user ? `${user.name} (${user.email})` : 'nenhum',
+        authLoading,
+        isLoading,
         initialCheckDone
       });
       
@@ -60,14 +62,21 @@ export default function ProtectedRoute({
       
       // Se não houver usuário e a verificação inicial já tiver sido feita, redireciona
       if (!user && initialCheckDone) {
-        console.log('ProtectedRoute: Usuário não autenticado, redirecionando para login');
-        router.replace('/login');
+        console.log('ProtectedRoute: Usuário não autenticado, preparando redirecionamento para login');
+        
+        // Adicionar um pequeno atraso para evitar conflitos de navegação
+        const redirectTimer = setTimeout(() => {
+          console.log('ProtectedRoute: Executando redirecionamento para login');
+          router.replace('/login');
+        }, 100);
+        
+        return () => clearTimeout(redirectTimer);
       }
       
       // Desativar o estado de carregamento após a verificação
       setIsLoading(false);
     }
-  }, [user, authLoading, router, firebaseUser, initialCheckDone, authChecks]);
+  }, [user, authLoading, router, firebaseUser, initialCheckDone, authChecks, isLoading]);
 
   // Limpar dados de autenticação inválidos se necessário
   useEffect(() => {
