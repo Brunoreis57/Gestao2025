@@ -11,11 +11,12 @@ export default function ProtectedRoute({
   children: React.ReactNode;
 }) {
   const { user, firebaseUser, isLoading: authLoading } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  // Inicializar como false para não mostrar a tela de carregamento
+  const [isLoading, setIsLoading] = useState(false);
   const [authChecks, setAuthChecks] = useState(0);
   const router = useRouter();
 
-  // Adicionar log detalhado do ciclo de vida do componente
+  // Log detalhado do ciclo de vida do componente
   useEffect(() => {
     console.log('ProtectedRoute: Componente montado');
     
@@ -35,6 +36,7 @@ export default function ProtectedRoute({
     });
   }, [user, firebaseUser, authLoading, isLoading, authChecks]);
 
+  // Verificação rápida de autenticação - sem estado de carregamento
   useEffect(() => {
     // Verificar se o usuário está autenticado
     if (!authLoading) {
@@ -51,11 +53,8 @@ export default function ProtectedRoute({
       if (!user) {
         console.log('ProtectedRoute: Usuário não autenticado, redirecionando para login');
         // Redirecionar para a página de login se não estiver autenticado
+        // Redireciona sem mostrar tela de carregamento
         router.replace('/login');
-      } else {
-        console.log('ProtectedRoute: Usuário autenticado, mostrando conteúdo protegido');
-        // Caso contrário, mostrar o conteúdo
-        setIsLoading(false);
       }
     }
   }, [user, authLoading, router, firebaseUser, authChecks]);
@@ -82,7 +81,7 @@ export default function ProtectedRoute({
               !authStorage.state.user) {
             console.warn('ProtectedRoute: Dados de autenticação inválidos detectados, limpando...');
             localStorage.removeItem('auth-storage');
-            window.location.reload();
+            window.location.href = '/login?reset=true';
           }
         }
       } catch (error) {
@@ -103,33 +102,23 @@ export default function ProtectedRoute({
     }
   }, [authChecks]);
 
-  if (isLoading || authLoading) {
-    return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <FaSpinner className="animate-spin h-12 w-12 text-primary" />
-        <h2 className="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-300">
-          Carregando...
-        </h2>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Verificando suas credenciais
-        </p>
-        {authChecks > 5 && (
-          <p className="mt-4 text-xs text-red-500">
-            Estamos enfrentando um problema ao verificar suas credenciais.
-            <button 
-              onClick={() => {
-                localStorage.removeItem('auth-storage');
-                window.location.href = '/login?reset=true';
-              }}
-              className="ml-2 underline"
-            >
-              Clique aqui para reiniciar
-            </button>
-          </p>
-        )}
-      </div>
-    );
+  // Se o usuário estiver logado, sempre renderizar o conteúdo
+  // Nunca mostrar a tela de carregamento
+  if (user) {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  // Caso esteja verificando autenticação e não tenhamos confirmação:
+  // - Se não estivermos carregando, mostrar conteúdo mesmo assim
+  // - Se estivermos carregando, mostrar uma versão simplificada sem mensagem
+  if (!isLoading && !authLoading) {
+    return <>{children}</>;
+  }
+
+  // Versão extremamente simplificada do carregamento (sem mensagem)
+  return (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <FaSpinner className="animate-spin h-12 w-12 text-primary" />
+    </div>
+  );
 } 

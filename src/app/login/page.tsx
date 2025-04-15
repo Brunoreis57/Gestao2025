@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [loginBlocked, setLoginBlocked] = useState(false);
   const [showFallbackHelp, setShowFallbackHelp] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
 
   // Verificar se é um redirecionamento de reset
   useEffect(() => {
@@ -39,6 +40,19 @@ export default function LoginPage() {
       router.replace('/banco');
     }
   }, [user, router]);
+
+  // Adicionar um tempo máximo para o estado de carregamento
+  useEffect(() => {
+    if (isLoading) {
+      const timeoutId = setTimeout(() => {
+        // Se ainda estiver carregando após 2 segundos, forçar o fim do carregamento
+        console.warn('LoginPage: Timeout de carregamento, forçando estado não-carregando');
+        setLocalLoading(false);
+      }, 2000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isLoading]);
 
   // Monitorar tentativas de login para prevenir muitas tentativas
   useEffect(() => {
@@ -97,14 +111,17 @@ export default function LoginPage() {
     e.preventDefault();
     console.log('LoginPage: Tentativa de login iniciada');
     clearError();
+    setLocalLoading(true);
 
     if (loginBlocked) {
       console.warn('LoginPage: Tentativa de login enquanto bloqueado');
+      setLocalLoading(false);
       return;
     }
 
     if (!validateForm()) {
       console.log('LoginPage: Formulário inválido');
+      setLocalLoading(false);
       return;
     }
 
@@ -116,6 +133,7 @@ export default function LoginPage() {
       router.push('/banco');
     } catch (error) {
       console.error('LoginPage: Erro no login:', error);
+      setLocalLoading(false);
     }
   };
 
@@ -232,7 +250,7 @@ export default function LoginPage() {
                     formErrors.email ? 'border-red-500' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400`}
                   placeholder="Seu email"
-                  disabled={loginBlocked || isLoading}
+                  disabled={loginBlocked || localLoading}
                 />
               </div>
               {formErrors.email && (
@@ -262,13 +280,13 @@ export default function LoginPage() {
                     formErrors.password ? 'border-red-500' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400`}
                   placeholder="Sua senha"
-                  disabled={loginBlocked || isLoading}
+                  disabled={loginBlocked || localLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  disabled={loginBlocked || isLoading}
+                  disabled={loginBlocked || localLoading}
                 >
                   {showPassword ? (
                     <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-500" />
@@ -312,14 +330,14 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              disabled={loginBlocked || isLoading}
+              disabled={loginBlocked || localLoading}
               className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                loginBlocked || isLoading
+                loginBlocked || localLoading
                   ? 'bg-primary-400 cursor-not-allowed'
                   : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
               }`}
             >
-              {isLoading ? (
+              {localLoading ? (
                 <>
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

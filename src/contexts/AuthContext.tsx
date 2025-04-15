@@ -22,7 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   firebaseUser: null,
-  isLoading: true,
+  isLoading: false,
   error: null,
   login: async () => {},
   logout: async () => {},
@@ -38,7 +38,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
@@ -57,14 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let unsubscribe = () => {};
     
     console.log('AuthContext: Configurando observador de autenticação');
-    setIsLoading(true);
 
-    // Configurar timeout para detectar possíveis problemas de resposta
+    // Reduzir o timeout para apenas 3 segundos
     timeoutId = setTimeout(() => {
       console.warn('AuthContext: Timeout de autenticação detectado. O Firebase pode estar com problemas de conectividade.');
       setAuthTimeoutDetected(true);
       setIsLoading(false);
-    }, 10000);
+    }, 3000);
     
     try {
       unsubscribe = onAuthStateChanged(auth, async (currentFirebaseUser) => {
@@ -75,7 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         clearTimeout(timeoutId);
         setAuthTimeoutDetected(false);
-        setIsLoading(true);
         
         if (currentFirebaseUser) {
           try {
