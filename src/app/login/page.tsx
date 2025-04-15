@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [loginBlocked, setLoginBlocked] = useState(false);
   const [showFallbackHelp, setShowFallbackHelp] = useState(false);
   const [localLoading, setLocalLoading] = useState(false);
+  const redirectAttempted = useRef(false);
 
   // Verificar se é um redirecionamento de reset
   useEffect(() => {
@@ -35,24 +36,27 @@ export default function LoginPage() {
 
   // Verificar se o usuário já está autenticado
   useEffect(() => {
-    if (user) {
+    if (user && !redirectAttempted.current) {
       console.log('LoginPage: Usuário já autenticado, redirecionando para banco');
-      router.replace('/banco');
+      redirectAttempted.current = true;
+      setTimeout(() => {
+        router.replace('/banco');
+      }, 100);
     }
   }, [user, router]);
 
   // Adicionar um tempo máximo para o estado de carregamento
   useEffect(() => {
-    if (isLoading) {
+    if (localLoading) {
       const timeoutId = setTimeout(() => {
-        // Se ainda estiver carregando após 2 segundos, forçar o fim do carregamento
+        // Se ainda estiver carregando após 5 segundos, forçar o fim do carregamento
         console.warn('LoginPage: Timeout de carregamento, forçando estado não-carregando');
         setLocalLoading(false);
-      }, 2000);
+      }, 5000);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [isLoading]);
+  }, [localLoading]);
 
   // Monitorar tentativas de login para prevenir muitas tentativas
   useEffect(() => {
@@ -130,6 +134,7 @@ export default function LoginPage() {
       console.log('LoginPage: Enviando credenciais para autenticação');
       await login(email, password);
       console.log('LoginPage: Login bem-sucedido, redirecionando');
+      redirectAttempted.current = true;
       router.push('/banco');
     } catch (error) {
       console.error('LoginPage: Erro no login:', error);
@@ -156,6 +161,19 @@ export default function LoginPage() {
       alert('Parece que você está com problemas de conexão com a internet. Verifique sua conexão e tente novamente.');
     }
   };
+
+  // Se já estiver autenticado, mostrar uma tela de redirecionamento
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <div className="text-center">
+          <div className="animate-spin mb-4 h-10 w-10 mx-auto border-4 border-primary-500 border-t-transparent rounded-full"></div>
+          <h2 className="text-xl font-medium text-gray-900 dark:text-white">Redirecionando para o sistema...</h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Você já está autenticado</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">

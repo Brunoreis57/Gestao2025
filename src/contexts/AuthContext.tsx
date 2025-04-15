@@ -38,12 +38,13 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Debugging flags
   const [authTimeoutDetected, setAuthTimeoutDetected] = useState(false);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   // Função para forçar a atualização do contexto
   const forceRefresh = useCallback(() => {
@@ -57,23 +58,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let unsubscribe = () => {};
     
     console.log('AuthContext: Configurando observador de autenticação');
+    setIsLoading(true);
 
-    // Reduzir o timeout para apenas 3 segundos
+    // Aumento do timeout para 5 segundos para evitar falsos positivos
     timeoutId = setTimeout(() => {
       console.warn('AuthContext: Timeout de autenticação detectado. O Firebase pode estar com problemas de conectividade.');
       setAuthTimeoutDetected(true);
       setIsLoading(false);
-    }, 3000);
+      
+      // Se não conseguimos inicializar autenticação em 5 segundos, consideramos o usuário como não autenticado
+      if (!authInitialized) {
+        setUser(null);
+        setFirebaseUser(null);
+        setAuthInitialized(true);
+      }
+    }, 5000);
     
     try {
       unsubscribe = onAuthStateChanged(auth, async (currentFirebaseUser) => {
+        clearTimeout(timeoutId);
+        setAuthInitialized(true);
+        setAuthTimeoutDetected(false);
+        
         console.log('AuthContext: Estado de autenticação alterado', { 
           isAuthenticated: !!currentFirebaseUser,
           uid: currentFirebaseUser?.uid
         });
-        
-        clearTimeout(timeoutId);
-        setAuthTimeoutDetected(false);
         
         if (currentFirebaseUser) {
           try {
@@ -115,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("AuthContext: Erro ao inicializar observador de autenticação:", initError);
       clearTimeout(timeoutId);
       setIsLoading(false);
+      setAuthInitialized(true);
     }
 
     return () => {
@@ -161,6 +172,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("AuthContext: Erro no login:", error);
       setError(translateFirebaseError(error.code) || 'Ocorreu um erro durante o login');
+      // Em caso de erro, garantir que o estado de usuário está limpo
+      setUser(null);
+      setFirebaseUser(null);
       throw error;
     } finally {
       setIsLoading(false);
@@ -195,6 +209,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthContext: Logout bem-sucedido');
       setUser(null);
       setFirebaseUser(null);
+      // Garantir limpeza do localStorage
+      localStorage.removeItem('auth-storage');
     } catch (error: any) {
       console.error("AuthContext: Erro no logout:", error);
       setError('Ocorreu um erro durante o logout');
@@ -252,6 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Se houver timeout, forçar estado de não autenticado para evitar problemas
       setUser(null);
       setFirebaseUser(null);
+      setIsLoading(false);
     }
   }, [authTimeoutDetected]);
 

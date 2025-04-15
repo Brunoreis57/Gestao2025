@@ -11,8 +11,9 @@ export default function ProtectedRoute({
   children: React.ReactNode;
 }) {
   const { user, firebaseUser, isLoading: authLoading } = useAuth();
-  // Inicializar como false para não mostrar a tela de carregamento
-  const [isLoading, setIsLoading] = useState(false);
+  // Inicializar como true para mostrar a tela de carregamento inicialmente
+  const [isLoading, setIsLoading] = useState(true);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [authChecks, setAuthChecks] = useState(0);
   const router = useRouter();
 
@@ -32,32 +33,41 @@ export default function ProtectedRoute({
       firebaseUser: firebaseUser ? `UID: ${firebaseUser.uid}` : 'nenhum',
       authLoading, 
       isLoading,
-      authChecks
+      authChecks,
+      initialCheckDone
     });
-  }, [user, firebaseUser, authLoading, isLoading, authChecks]);
+  }, [user, firebaseUser, authLoading, isLoading, authChecks, initialCheckDone]);
 
-  // Verificação rápida de autenticação - sem estado de carregamento
+  // Verificação principal de autenticação
   useEffect(() => {
-    // Verificar se o usuário está autenticado
+    // Só executa essa verificação se o carregamento de autenticação tiver terminado
     if (!authLoading) {
-      // Incrementar contador para detectar loops infinitos
-      setAuthChecks(prev => prev + 1);
-      
-      console.log('ProtectedRoute: Verificação de autenticação #', authChecks + 1, { 
+      console.log('ProtectedRoute: Verificação de autenticação principal', { 
         isAuthenticated: !!user, 
         user: user ? `${user.name} (${user.email})` : 'nenhum', 
-        authLoading,
-        firebaseUser: firebaseUser ? `UID: ${firebaseUser.uid}` : 'nenhum'
+        initialCheckDone
       });
       
-      if (!user) {
+      // Indica que a verificação inicial foi concluída
+      if (!initialCheckDone) {
+        setInitialCheckDone(true);
+      }
+      
+      // Só incrementa o contador uma vez por ciclo de vida do componente
+      if (authChecks === 0) {
+        setAuthChecks(1);
+      }
+      
+      // Se não houver usuário e a verificação inicial já tiver sido feita, redireciona
+      if (!user && initialCheckDone) {
         console.log('ProtectedRoute: Usuário não autenticado, redirecionando para login');
-        // Redirecionar para a página de login se não estiver autenticado
-        // Redireciona sem mostrar tela de carregamento
         router.replace('/login');
       }
+      
+      // Desativar o estado de carregamento após a verificação
+      setIsLoading(false);
     }
-  }, [user, authLoading, router, firebaseUser, authChecks]);
+  }, [user, authLoading, router, firebaseUser, initialCheckDone, authChecks]);
 
   // Limpar dados de autenticação inválidos se necessário
   useEffect(() => {
@@ -94,7 +104,7 @@ export default function ProtectedRoute({
 
   // Evitar loops infinitos de verificação
   useEffect(() => {
-    if (authChecks > 10) {
+    if (authChecks > 5) {
       console.error('ProtectedRoute: Possível loop infinito detectado!', { authChecks });
       // Forçar reset do estado para quebrar o loop
       localStorage.removeItem('auth-storage');
@@ -102,23 +112,27 @@ export default function ProtectedRoute({
     }
   }, [authChecks]);
 
-  // Se o usuário estiver logado, sempre renderizar o conteúdo
-  // Nunca mostrar a tela de carregamento
+  // Se o usuário estiver logado, renderizar o conteúdo
   if (user) {
     return <>{children}</>;
   }
 
-  // Caso esteja verificando autenticação e não tenhamos confirmação:
-  // - Se não estivermos carregando, mostrar conteúdo mesmo assim
-  // - Se estivermos carregando, mostrar uma versão simplificada sem mensagem
-  if (!isLoading && !authLoading) {
-    return <>{children}</>;
+  // Mostrar tela de carregamento enquanto verificamos a autenticação pela primeira vez
+  if (isLoading || (authLoading && !initialCheckDone)) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <FaSpinner className="animate-spin h-12 w-12 text-primary" />
+      </div>
+    );
   }
 
-  // Versão extremamente simplificada do carregamento (sem mensagem)
+  // Página temporária enquanto o redirecionamento está acontecendo
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <FaSpinner className="animate-spin h-12 w-12 text-primary" />
+      <div className="text-center">
+        <FaSpinner className="animate-spin h-12 w-12 text-primary mx-auto mb-4" />
+        <p className="text-gray-600 dark:text-gray-400">Verificando acesso...</p>
+      </div>
     </div>
   );
 } 
