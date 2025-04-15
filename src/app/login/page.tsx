@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, error: authError, clearError, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const { login, error: authError, clearError, isLoading, user, forceRefresh } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,6 +18,50 @@ export default function LoginPage() {
     email: '',
     password: ''
   });
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [loginBlocked, setLoginBlocked] = useState(false);
+  const [showFallbackHelp, setShowFallbackHelp] = useState(false);
+
+  // Verificar se é um redirecionamento de reset
+  useEffect(() => {
+    const reset = searchParams.get('reset');
+    if (reset === 'true') {
+      console.log('LoginPage: Redirecionamento de reset detectado. Limpando estado.');
+      localStorage.removeItem('auth-storage');
+      forceRefresh();
+    }
+  }, [searchParams, forceRefresh]);
+
+  // Verificar se o usuário já está autenticado
+  useEffect(() => {
+    if (user) {
+      console.log('LoginPage: Usuário já autenticado, redirecionando para banco');
+      router.replace('/banco');
+    }
+  }, [user, router]);
+
+  // Monitorar tentativas de login para prevenir muitas tentativas
+  useEffect(() => {
+    if (loginAttempts >= 5) {
+      console.warn('LoginPage: Muitas tentativas de login detectadas, bloqueando temporariamente');
+      setLoginBlocked(true);
+      
+      const timer = setTimeout(() => {
+        console.log('LoginPage: Desbloqueando login após timeout');
+        setLoginBlocked(false);
+        setLoginAttempts(0);
+      }, 60000); // 1 minuto de bloqueio
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loginAttempts]);
+
+  // Mostrar opções de ajuda após múltiplas tentativas
+  useEffect(() => {
+    if (loginAttempts >= 3) {
+      setShowFallbackHelp(true);
+    }
+  }, [loginAttempts]);
 
   const validateForm = () => {
     let isValid = true;
@@ -50,15 +95,47 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('LoginPage: Tentativa de login iniciada');
     clearError();
 
-    if (!validateForm()) return;
+    if (loginBlocked) {
+      console.warn('LoginPage: Tentativa de login enquanto bloqueado');
+      return;
+    }
+
+    if (!validateForm()) {
+      console.log('LoginPage: Formulário inválido');
+      return;
+    }
 
     try {
+      setLoginAttempts(prev => prev + 1);
+      console.log('LoginPage: Enviando credenciais para autenticação');
       await login(email, password);
+      console.log('LoginPage: Login bem-sucedido, redirecionando');
       router.push('/banco');
     } catch (error) {
-      console.error('Erro no login:', error);
+      console.error('LoginPage: Erro no login:', error);
+    }
+  };
+
+  const handleReset = () => {
+    console.log('LoginPage: Resetando estado de autenticação');
+    localStorage.removeItem('auth-storage');
+    // Força a atualização da página para reiniciar todos os estados
+    window.location.href = '/login?reset=true';
+  };
+
+  // Verificar problemas comuns de conectividade
+  const handleCheckNetwork = async () => {
+    try {
+      console.log('LoginPage: Verificando conectividade com a internet');
+      const response = await fetch('https://www.google.com', { mode: 'no-cors', cache: 'no-store' });
+      console.log('LoginPage: Teste de conectividade concluído');
+      alert('Sua conexão com a internet parece estar funcionando. O problema pode ser temporário com o servidor de autenticação.');
+    } catch (error) {
+      console.error('LoginPage: Erro de conectividade detectado', error);
+      alert('Parece que você está com problemas de conexão com a internet. Verifique sua conexão e tente novamente.');
     }
   };
 
@@ -70,10 +147,73 @@ export default function LoginPage() {
             Entrar no Sistema
           </h2>
         </div>
+        
+        {showFallbackHelp && (
+          <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/30 p-4 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FiAlertTriangle className="h-5 w-5 text-yellow-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                  Problemas para entrar?
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-200">
+                  <p>Verifique se:</p>
+                  <ul className="list-disc pl-5 mt-1 space-y-1">
+                    <li>Seu email e senha estão corretos</li>
+                    <li>Sua conexão com a internet está funcionando</li>
+                    <li>Você tem uma conta cadastrada no sistema</li>
+                  </ul>
+                  <div className="mt-3 flex flex-col space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleCheckNetwork}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:hover:bg-yellow-900/70 transition-colors"
+                    >
+                      Verificar conexão
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900/70 transition-colors"
+                    >
+                      <FiRefreshCw className="mr-2 h-4 w-4" />
+                      Reiniciar autenticação
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {loginBlocked && (
+          <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FiAlertTriangle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
+                  Login temporariamente bloqueado
+                </h3>
+                <div className="mt-2 text-sm text-red-700 dark:text-red-200">
+                  <p>
+                    Muitas tentativas de login foram detectadas. Por favor, aguarde um minuto e tente novamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Email
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FiMail className="h-5 w-5 text-gray-400" />
@@ -92,6 +232,7 @@ export default function LoginPage() {
                     formErrors.email ? 'border-red-500' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400`}
                   placeholder="Seu email"
+                  disabled={loginBlocked || isLoading}
                 />
               </div>
               {formErrors.email && (
@@ -100,7 +241,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="sr-only">Senha</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Senha
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FiLock className="h-5 w-5 text-gray-400" />
@@ -119,11 +262,13 @@ export default function LoginPage() {
                     formErrors.password ? 'border-red-500' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:placeholder-gray-400`}
                   placeholder="Sua senha"
+                  disabled={loginBlocked || isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  disabled={loginBlocked || isLoading}
                 >
                   {showPassword ? (
                     <FiEyeOff className="h-5 w-5 text-gray-400 hover:text-gray-500" />
@@ -139,12 +284,10 @@ export default function LoginPage() {
           </div>
 
           {authError && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
+            <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
+                  <FiAlertTriangle className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-red-800 dark:text-red-200">{authError}</p>
@@ -169,9 +312,9 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loginBlocked || isLoading}
               className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                isLoading 
+                loginBlocked || isLoading
                   ? 'bg-primary-400 cursor-not-allowed'
                   : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
               }`}
