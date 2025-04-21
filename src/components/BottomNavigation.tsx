@@ -4,21 +4,16 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaHome, FaMoneyBill, FaCalendarAlt, FaUser } from 'react-icons/fa';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function BottomNavigation() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const { user } = useAuth();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) return null;
-
-  // Se o usuário não estiver autenticado, não mostra a navegação
-  if (!user) return null;
 
   const navigationItems = [
     {

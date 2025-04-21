@@ -2,18 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { useTheme } from 'next-themes';
-import { FaHome, FaMoneyBill, FaCalendarAlt, FaSun, FaMoon, FaSignOutAlt, FaUser, FaUsersCog } from 'react-icons/fa';
-import { useAuthStore } from '@/store/authStore';
+import { FaHome, FaMoneyBill, FaCalendarAlt, FaSun, FaMoon, FaUser, FaUsersCog } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Sidebar() {
-  const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const { user, logout } = useAuthStore();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsMounted(true);
@@ -30,11 +29,6 @@ export default function Sidebar() {
   const adminLinks = [
     { name: 'Gerenciar Usuários', href: '/admin/usuarios', icon: FaUsersCog },
   ];
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -72,8 +66,8 @@ export default function Sidebar() {
           );
         })}
 
-        {/* Links de administração - só aparecem se o usuário for administrador */}
-        {user?.isAdmin && adminLinks.map((link) => {
+        {/* Links de administração - visíveis para todos agora */}
+        {user.isAdmin && adminLinks.map((link) => {
           const Icon = link.icon;
           return (
             <Link
@@ -97,17 +91,15 @@ export default function Sidebar() {
 
       {/* Área do usuário e configurações */}
       <div className="flex flex-col items-center gap-3 mt-auto">
-        {user && (
-          <div className="relative group">
-            <div className="p-3 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
-              <FaUser className="w-6 h-6" />
-            </div>
-            <div className="absolute left-full ml-2 bg-gray-800 dark:bg-gray-700 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity min-w-max">
-              {user.name}
-              {user.isAdmin && <span className="block text-xs text-indigo-300">(Administrador)</span>}
-            </div>
+        <div className="relative group">
+          <div className="p-3 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <FaUser className="w-6 h-6" />
           </div>
-        )}
+          <div className="absolute left-full ml-2 bg-gray-800 dark:bg-gray-700 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity min-w-max">
+            {user.name}
+            {user.isAdmin && <span className="block text-xs text-indigo-300">(Administrador)</span>}
+          </div>
+        </div>
 
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -122,18 +114,6 @@ export default function Sidebar() {
             {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
           </span>
         </button>
-
-        {user && (
-          <button
-            onClick={handleLogout}
-            className="p-3 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-red-500 dark:hover:text-red-400 transition-colors relative group"
-          >
-            <FaSignOutAlt className="w-6 h-6" />
-            <span className="absolute left-full ml-2 bg-gray-800 dark:bg-gray-700 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-              Sair
-            </span>
-          </button>
-        )}
       </div>
     </div>
   );
