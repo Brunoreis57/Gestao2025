@@ -8,12 +8,16 @@ import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 const publicRoutes = [
   '/',  // Rota principal é pública pois realiza redirecionamento
   '/login', 
-  '/login/recuperar-senha', 
-  '/login/redefinir-senha',
   '/recuperar-senha',
   '/cadastro',
-  '/resetar-senha'
+  '/resetar-senha',
+  '/healthcheck'  // Página de diagnóstico do sistema
 ];
+
+// Verificar se uma rota começa com algum dos prefixos listados
+const hasPublicPrefix = (path: string) => {
+  return publicRoutes.some(route => path === route || path.startsWith(`${route}/`));
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -22,20 +26,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Este efeito garante que o componente só será renderizado no cliente
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // Log para debug
+    console.log('AuthProvider montado, pathname:', pathname);
+    
+    // Verificar rotas
+    const isPublic = hasPublicPrefix(pathname || '');
+    console.log('Rota é pública?', isPublic);
+  }, [pathname]);
 
   // Não renderizamos nada durante a montagem do componente para evitar erros de hidratação
   if (!mounted) {
     return null;
   }
 
-  // Verifica se a rota atual é pública
-  const isPublicRoute = publicRoutes.some(route => {
-    if (route === '/login') {
-      return pathname === '/login';
-    }
-    return pathname?.startsWith(route);
-  });
+  // Verificação simplificada para determinar se a rota é pública
+  const isPublicRoute = hasPublicPrefix(pathname || '');
 
   console.log('AuthProvider: Rota atual:', pathname, 'é pública:', isPublicRoute);
 
