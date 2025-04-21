@@ -10,138 +10,46 @@ export default function ProtectedRoute({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, firebaseUser, isLoading: authLoading } = useAuth();
-  // Inicializar como true para mostrar a tela de carregamento inicialmente
-  const [isLoading, setIsLoading] = useState(true);
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
-  const [authChecks, setAuthChecks] = useState(0);
+  const { user, isLoading: authLoading } = useAuth();
+  const [showLoading, setShowLoading] = useState(true);
   const router = useRouter();
 
-  // Log detalhado do ciclo de vida do componente
+  // Verificar autenticação e redirecionar se necessário
   useEffect(() => {
-    console.log('ProtectedRoute: Componente montado');
-    
-    return () => {
-      console.log('ProtectedRoute: Componente desmontado');
-    };
-  }, []);
-
-  // Log detalhado das alterações nos estados principais
-  useEffect(() => {
-    console.log('ProtectedRoute: Estado de autenticação alterado:', { 
-      user, 
-      firebaseUser: firebaseUser ? `UID: ${firebaseUser.uid}` : 'nenhum',
-      authLoading, 
-      isLoading,
-      authChecks,
-      initialCheckDone
+    console.log('ProtectedRoute: Verificando autenticação', { 
+      autenticado: !!user, 
+      carregando: authLoading 
     });
-  }, [user, firebaseUser, authLoading, isLoading, authChecks, initialCheckDone]);
 
-  // Verificação principal de autenticação
-  useEffect(() => {
-    // Só executa essa verificação se o carregamento de autenticação tiver terminado
-    if (!authLoading) {
-      console.log('ProtectedRoute: Verificação de autenticação principal', { 
-        isAuthenticated: !!user, 
-        user: user ? `${user.name} (${user.email})` : 'nenhum',
-        authLoading,
-        isLoading,
-        initialCheckDone
-      });
-      
-      // Indica que a verificação inicial foi concluída
-      if (!initialCheckDone) {
-        setInitialCheckDone(true);
-      }
-      
-      // Só incrementa o contador uma vez por ciclo de vida do componente
-      if (authChecks === 0) {
-        setAuthChecks(1);
-      }
-      
-      // Se não houver usuário e a verificação inicial já tiver sido feita, redireciona
-      if (!user && initialCheckDone) {
-        console.log('ProtectedRoute: Usuário não autenticado, preparando redirecionamento para login');
-        
-        // Adicionar um pequeno atraso para evitar conflitos de navegação
-        const redirectTimer = setTimeout(() => {
-          console.log('ProtectedRoute: Executando redirecionamento para login');
-          router.replace('/login');
-        }, 100);
-        
-        return () => clearTimeout(redirectTimer);
-      }
-      
-      // Desativar o estado de carregamento após a verificação
-      setIsLoading(false);
+    // Se não estiver carregando e não tiver usuário, redirecionar para login
+    if (!authLoading && !user) {
+      console.log('ProtectedRoute: Redirecionando para login');
+      router.replace('/login');
     }
-  }, [user, authLoading, router, firebaseUser, initialCheckDone, authChecks, isLoading]);
-
-  // Limpar dados de autenticação inválidos se necessário
-  useEffect(() => {
-    const checkAuthStorage = () => {
-      try {
-        const authStorageRaw = localStorage.getItem('auth-storage');
-        console.log('ProtectedRoute: Verificando localStorage auth-storage', 
-          authStorageRaw ? 'dados encontrados' : 'dados não encontrados');
-        
-        if (authStorageRaw) {
-          const authStorage = JSON.parse(authStorageRaw);
-          console.log('ProtectedRoute: Conteúdo do auth-storage:', {
-            hasState: !!authStorage?.state,
-            isAuthenticated: authStorage?.state?.isAuthenticated,
-            hasUser: !!authStorage?.state?.user
-          });
-          
-          // Verificar se os dados estão corrompidos ou inválidos
-          if (authStorage && authStorage.state && 
-              authStorage.state.isAuthenticated && 
-              !authStorage.state.user) {
-            console.warn('ProtectedRoute: Dados de autenticação inválidos detectados, limpando...');
-            localStorage.removeItem('auth-storage');
-            window.location.href = '/login?reset=true';
-          }
-        }
-      } catch (error) {
-        console.error('ProtectedRoute: Erro ao verificar localStorage', error);
-      }
-    };
     
-    checkAuthStorage();
-  }, []);
-
-  // Evitar loops infinitos de verificação
-  useEffect(() => {
-    if (authChecks > 5) {
-      console.error('ProtectedRoute: Possível loop infinito detectado!', { authChecks });
-      // Forçar reset do estado para quebrar o loop
-      localStorage.removeItem('auth-storage');
-      window.location.href = '/login?reset=true';
+    // Se não estiver carregando ou tiver usuário, pode mostrar o conteúdo
+    if (!authLoading || user) {
+      setShowLoading(false);
     }
-  }, [authChecks]);
+  }, [user, authLoading, router]);
 
-  // Se o usuário estiver logado, renderizar o conteúdo
-  if (user) {
-    return <>{children}</>;
-  }
-
-  // Mostrar tela de carregamento enquanto verificamos a autenticação pela primeira vez
-  if (isLoading || (authLoading && !initialCheckDone)) {
+  // Mostrar indicador de carregamento apenas quando necessário
+  if (showLoading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <FaSpinner className="animate-spin h-12 w-12 text-primary" />
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <FaSpinner className="animate-spin h-12 w-12 text-primary mx-auto" />
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando...</p>
+        </div>
       </div>
     );
   }
 
-  // Página temporária enquanto o redirecionamento está acontecendo
-  return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="text-center">
-        <FaSpinner className="animate-spin h-12 w-12 text-primary mx-auto mb-4" />
-        <p className="text-gray-600 dark:text-gray-400">Verificando acesso...</p>
-      </div>
-    </div>
-  );
+  // Se o usuário estiver autenticado, mostrar o conteúdo
+  if (user) {
+    return <>{children}</>;
+  }
+
+  // Estado intermediário - mostra um componente vazio enquanto aguarda redirecionamento
+  return null;
 } 

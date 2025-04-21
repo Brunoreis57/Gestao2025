@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 
 // Rotas públicas que não requerem autenticação
 const publicRoutes = [
+  '/',  // Rota principal é pública pois realiza redirecionamento
   '/login', 
   '/login/recuperar-senha', 
   '/login/redefinir-senha',

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { User as FirebaseUser, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, confirmPasswordReset as firebaseConfirmPasswordReset } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { User, loginUser, registerUser, logoutUser, resetPassword, getCurrentUser } from '@/services/authService';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User as FirebaseUser, onAuthStateChanged, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { User } from '@/services/authService';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -12,9 +13,7 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  confirmPasswordReset: (token: string, newPassword: string) => Promise<void>;
   clearError: () => void;
   forceRefresh: () => void;
 }
@@ -22,13 +21,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   firebaseUser: null,
-  isLoading: false,
+  isLoading: true,
   error: null,
   login: async () => {},
   logout: async () => {},
-  register: async () => {},
   resetPassword: async () => {},
-  confirmPasswordReset: async () => {},
   clearError: () => {},
   forceRefresh: () => {},
 });
@@ -38,197 +35,121 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
-  // Debugging flags
-  const [authTimeoutDetected, setAuthTimeoutDetected] = useState(false);
-  const [authInitialized, setAuthInitialized] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Função para forçar a atualização do contexto
-  const forceRefresh = useCallback(() => {
-    console.log('AuthContext: Forçando atualização do contexto');
-    setRefreshTrigger(prev => prev + 1);
-  }, []);
-
-  // Monitorar mudanças no estado de autenticação do Firebase
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-    let unsubscribe = () => {};
-    
-    console.log('AuthContext: Configurando observador de autenticação');
-    setIsLoading(true);
-
-    // Aumento do timeout para 5 segundos para evitar falsos positivos
-    timeoutId = setTimeout(() => {
-      console.warn('AuthContext: Timeout de autenticação detectado. O Firebase pode estar com problemas de conectividade.');
-      setAuthTimeoutDetected(true);
-      setIsLoading(false);
-      
-      // Se não conseguimos inicializar autenticação em 5 segundos, consideramos o usuário como não autenticado
-      if (!authInitialized) {
-        setUser(null);
-        setFirebaseUser(null);
-        setAuthInitialized(true);
-      }
-    }, 5000);
-    
+  // Função para recuperar os dados do usuário do Firestore
+  const fetchUserData = async (firebaseUser: FirebaseUser) => {
     try {
-      unsubscribe = onAuthStateChanged(auth, async (currentFirebaseUser) => {
-        clearTimeout(timeoutId);
-        setAuthInitialized(true);
-        setAuthTimeoutDetected(false);
-        
-        console.log('AuthContext: Estado de autenticação alterado', { 
-          isAuthenticated: !!currentFirebaseUser,
-          uid: currentFirebaseUser?.uid
-        });
-        
-        if (currentFirebaseUser) {
-          try {
-            console.log('AuthContext: Buscando detalhes do usuário');
-            const userDetails = await getCurrentUser(currentFirebaseUser);
-            
-            if (userDetails) {
-              console.log('AuthContext: Detalhes do usuário encontrados', { 
-                name: userDetails.name,
-                email: userDetails.email
-              });
-              setFirebaseUser(currentFirebaseUser);
-              setUser(userDetails);
-            } else {
-              console.warn('AuthContext: Usuário autenticado, mas sem detalhes no Firestore');
-              setFirebaseUser(currentFirebaseUser);
-              setUser(null);
-              // Tentar logout automático para corrigir o estado
-              try {
-                await signOut(auth);
-              } catch (logoutError) {
-                console.error('AuthContext: Erro ao fazer logout automático', logoutError);
-              }
-            }
-          } catch (error) {
-            console.error("AuthContext: Erro ao buscar detalhes do usuário:", error);
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as Omit<User, 'uid'>;
+        return {
+          uid: firebaseUser.uid,
+          ...userData
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error("Erro ao buscar dados do usuário:", error);
+      return null;
+    }
+  };
+
+  // Monitorar mudanças na autenticação
+  useEffect(() => {
+    console.log('Configurando observer de autenticação');
+    setIsLoading(true);
+    
+    const unsubscribe = onAuthStateChanged(auth, async (currentFirebaseUser) => {
+      console.log('Estado de autenticação alterado:', currentFirebaseUser ? 'autenticado' : 'não autenticado');
+      
+      if (currentFirebaseUser) {
+        try {
+          const userData = await fetchUserData(currentFirebaseUser);
+          
+          if (userData) {
             setFirebaseUser(currentFirebaseUser);
+            setUser(userData);
+          } else {
+            // Se não encontrou dados do usuário, fazer logout
+            console.warn('Usuário autenticado, mas sem dados no Firestore');
+            await signOut(auth);
+            setFirebaseUser(null);
             setUser(null);
           }
-        } else {
-          console.log('AuthContext: Usuário não autenticado');
+        } catch (error) {
+          console.error('Erro ao processar autenticação:', error);
           setFirebaseUser(null);
           setUser(null);
         }
-        
-        setIsLoading(false);
-      });
-    } catch (initError) {
-      console.error("AuthContext: Erro ao inicializar observador de autenticação:", initError);
-      clearTimeout(timeoutId);
-      setIsLoading(false);
-      setAuthInitialized(true);
-    }
-
-    return () => {
-      console.log('AuthContext: Removendo observador de autenticação');
-      clearTimeout(timeoutId);
-      unsubscribe();
-    };
-  }, [refreshTrigger]);
-
-  // Efeito para verificar se o localStorage está funcionando corretamente
-  useEffect(() => {
-    try {
-      // Teste básico para verificar se o localStorage está disponível
-      localStorage.setItem('auth-test', 'test');
-      const testValue = localStorage.getItem('auth-test');
-      if (testValue !== 'test') {
-        console.warn('AuthContext: localStorage não está funcionando corretamente');
       } else {
-        localStorage.removeItem('auth-test');
+        setFirebaseUser(null);
+        setUser(null);
       }
-    } catch (error) {
-      console.error('AuthContext: Erro ao acessar localStorage', error);
-    }
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    console.log('AuthContext: Iniciando login', { email });
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Usando loginUser do authService que já integra a autenticação do Firebase
-      // com a busca de dados do usuário no Firestore
-      const userDetails = await loginUser(email, password);
-      console.log('AuthContext: Login bem-sucedido', { 
-        nome: userDetails.name, 
-        email: userDetails.email 
-      });
       
-      // O Firebase já atualizará o onAuthStateChanged, que definirá o firebaseUser
-      // então aqui só precisamos atualizar o user
-      setUser(userDetails);
-    } catch (error: any) {
-      console.error("AuthContext: Erro no login:", error);
-      setError(translateFirebaseError(error.code) || 'Ocorreu um erro durante o login');
-      // Em caso de erro, garantir que o estado de usuário está limpo
-      setUser(null);
-      setFirebaseUser(null);
-      throw error;
-    } finally {
       setIsLoading(false);
-    }
-  };
+    });
+    
+    return () => unsubscribe();
+  }, [refreshKey]);
 
-  const register = async (name: string, email: string, password: string) => {
-    console.log('AuthContext: Iniciando registro', { name, email });
+  // Login
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const user = await registerUser(name, email, password);
-      console.log('AuthContext: Registro bem-sucedido', { uid: user.uid });
-      setUser(user);
+      // Login no Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Buscar dados do usuário
+      const userData = await fetchUserData(userCredential.user);
+      
+      if (userData) {
+        setFirebaseUser(userCredential.user);
+        setUser(userData);
+        return;
+      }
+      
+      // Se não encontrou dados, fazer logout
+      await signOut(auth);
+      throw new Error('Usuário não encontrado no banco de dados');
     } catch (error: any) {
-      console.error("AuthContext: Erro no registro:", error);
-      setError(translateFirebaseError(error.code) || 'Ocorreu um erro durante o registro');
+      console.error("Erro no login:", error);
+      setError(translateFirebaseError(error.code) || 'Ocorreu um erro durante o login');
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Logout
   const logout = async () => {
-    console.log('AuthContext: Iniciando logout');
     setIsLoading(true);
-    setError(null);
-    
     try {
       await signOut(auth);
-      console.log('AuthContext: Logout bem-sucedido');
       setUser(null);
       setFirebaseUser(null);
-      // Garantir limpeza do localStorage
-      localStorage.removeItem('auth-storage');
     } catch (error: any) {
-      console.error("AuthContext: Erro no logout:", error);
+      console.error("Erro no logout:", error);
       setError('Ocorreu um erro durante o logout');
-      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Recuperação de senha
   const resetPassword = async (email: string) => {
-    console.log('AuthContext: Iniciando recuperação de senha', { email });
     setIsLoading(true);
     setError(null);
     
     try {
       await sendPasswordResetEmail(auth, email);
-      console.log('AuthContext: Email de recuperação enviado com sucesso');
     } catch (error: any) {
-      console.error("AuthContext: Erro na recuperação de senha:", error);
+      console.error("Erro na recuperação de senha:", error);
       setError(translateFirebaseError(error.code) || 'Ocorreu um erro ao solicitar recuperação de senha');
       throw error;
     } finally {
@@ -236,95 +157,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const confirmPasswordReset = async (token: string, newPassword: string) => {
-    console.log('AuthContext: Iniciando confirmação de redefinição de senha');
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await firebaseConfirmPasswordReset(auth, token, newPassword);
-      console.log('AuthContext: Senha redefinida com sucesso');
-    } catch (error: any) {
-      console.error("AuthContext: Erro ao redefinir senha:", error);
-      setError(translateFirebaseError(error.code) || 'Ocorreu um erro ao redefinir senha');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Limpar mensagens de erro
   const clearError = () => {
     if (error) {
-      console.log('AuthContext: Limpando mensagem de erro');
       setError(null);
     }
   };
 
-  // Adicionar tratamento para timeout de autenticação
-  useEffect(() => {
-    if (authTimeoutDetected) {
-      console.warn('AuthContext: Resolvendo timeout de autenticação');
-      // Se houver timeout, forçar estado de não autenticado para evitar problemas
-      setUser(null);
-      setFirebaseUser(null);
-      setIsLoading(false);
-    }
-  }, [authTimeoutDetected]);
-
-  // Adicionar verificação após inicialização do auth
-  useEffect(() => {
-    if (authInitialized && !isLoading) {
-      console.log('AuthContext: Estado de autenticação inicializado', { 
-        user: user ? `${user.name} (${user.email})` : 'não autenticado',
-        firebaseUser: firebaseUser ? 'presente' : 'ausente',
-        authTimeoutDetected
-      });
-      
-      // Verificar inconsistências entre firebaseUser e user
-      if (firebaseUser && !user) {
-        console.warn('AuthContext: Inconsistência detectada - firebaseUser existe mas user não');
-        // Tentar obter o user novamente
-        getCurrentUser(firebaseUser)
-          .then(userDetails => {
-            if (userDetails) {
-              console.log('AuthContext: Dados do usuário recuperados');
-              setUser(userDetails);
-            } else {
-              console.warn('AuthContext: Usuário não encontrado no Firestore, forçando logout');
-              signOut(auth).catch(e => console.error('Erro ao fazer logout automático', e));
-            }
-          })
-          .catch(error => {
-            console.error('AuthContext: Erro ao recuperar dados do usuário', error);
-          });
-      }
-    }
-  }, [authInitialized, isLoading, user, firebaseUser, authTimeoutDetected]);
-
-  const value = {
-    user,
-    firebaseUser,
-    isLoading,
-    error,
-    login,
-    logout,
-    register,
-    resetPassword,
-    confirmPasswordReset,
-    clearError,
-    forceRefresh,
+  // Força uma atualização do contexto
+  const forceRefresh = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{
+      user,
+      firebaseUser,
+      isLoading,
+      error,
+      login,
+      logout,
+      resetPassword,
+      clearError,
+      forceRefresh
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Função para traduzir códigos de erro do Firebase para mensagens amigáveis em português
+// Função para traduzir códigos de erro do Firebase
 function translateFirebaseError(errorCode: string): string | null {
-  console.log('AuthContext: Traduzindo código de erro', { errorCode });
+  console.log('Traduzindo código de erro:', errorCode);
   
   switch (errorCode) {
     case 'auth/invalid-email':
